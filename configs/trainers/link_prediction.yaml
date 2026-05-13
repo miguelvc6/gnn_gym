@@ -1,0 +1,4 @@
+trainer:
+  name: link_prediction
+  batch_size: 4096
+  negative_sampling_ratio: 1.0

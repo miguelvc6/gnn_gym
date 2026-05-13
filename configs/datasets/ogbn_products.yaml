@@ -1,0 +1,8 @@
+dataset:
+  name: ogbn-products
+  task: node_classification
+  source: ogb
+  root: data/ogb
+  metric: accuracy
+  evaluator: ogb
+  trainer: neighbor_node

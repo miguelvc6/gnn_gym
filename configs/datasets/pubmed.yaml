@@ -1,0 +1,8 @@
+dataset:
+  name: pubmed
+  task: node_classification
+  source: pyg
+  root: data/pyg
+  metric: accuracy
+  evaluator: accuracy
+  trainer: full_batch_node

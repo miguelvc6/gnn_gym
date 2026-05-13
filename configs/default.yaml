@@ -1,0 +1,22 @@
+experiment:
+  name: manual
+
+training:
+  max_epochs: 100
+  patience: 20
+  lr: 0.01
+  weight_decay: 0.0005
+  grad_clip_norm: 1.0
+  seed: 0
+
+logging:
+  backend: local
+  use_wandb: false
+
+artifacts:
+  save_best_checkpoint: true
+  save_last_checkpoint: true
+  save_predictions: false
+
+trainer:
+  name: full_batch_node

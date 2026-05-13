@@ -1,0 +1,8 @@
+experiment:
+  name: core_gat
+  seeds: [0]
+models: [gat]
+datasets: [toy-node]
+training:
+  max_epochs: 5
+  patience: 5

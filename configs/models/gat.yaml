@@ -1,0 +1,9 @@
+model:
+  name: gat
+  hidden_channels: 32
+  num_layers: 2
+  heads: 4
+  dropout: 0.2
+  attention_dropout: 0.2
+  activation: elu
+  norm: batchnorm

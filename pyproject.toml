@@ -1,0 +1,46 @@
+[project]
+name = "gnn-gym"
+version = "0.1.0"
+description = "Reproducible benchmarking framework for graph neural networks."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyarrow>=15",
+    "pyyaml>=6.0",
+    "rich>=13.7",
+    "scikit-learn>=1.4",
+    "torch>=2.2",
+    "torch-geometric>=2.5",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+ogb = ["ogb>=1.3"]
+tracking = ["tensorboard>=2.16", "wandb>=0.16"]
+
+[project.scripts]
+gnngym = "gnn_gym.cli:app"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.8",
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

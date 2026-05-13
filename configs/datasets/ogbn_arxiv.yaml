@@ -1,0 +1,8 @@
+dataset:
+  name: ogbn-arxiv
+  task: node_classification
+  source: ogb
+  root: data/ogb
+  metric: accuracy
+  evaluator: ogb
+  trainer: full_batch_node

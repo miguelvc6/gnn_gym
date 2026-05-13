@@ -1,0 +1,3 @@
+# Project Spec
+
+See [GNN_GYM_PROJECT_SPEC.md](GNN_GYM_PROJECT_SPEC.md).

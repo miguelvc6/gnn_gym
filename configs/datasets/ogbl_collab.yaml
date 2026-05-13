@@ -1,0 +1,8 @@
+dataset:
+  name: ogbl-collab
+  task: link_prediction
+  source: ogb
+  root: data/ogb
+  metric: hits@50
+  evaluator: ogb
+  trainer: link_prediction

@@ -1,0 +1,19 @@
+experiment:
+  name: core_all_baselines
+  seeds: [0]
+
+models:
+  - mlp
+  - gcn
+  - gat
+  - gin
+
+datasets:
+  - toy-node
+
+training:
+  max_epochs: 5
+  patience: 5
+  lr: 0.01
+  weight_decay: 0.0005
+  grad_clip_norm: 1.0

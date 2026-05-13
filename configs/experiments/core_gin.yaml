@@ -1,0 +1,8 @@
+experiment:
+  name: core_gin
+  seeds: [0]
+models: [gin]
+datasets: [toy-node]
+training:
+  max_epochs: 5
+  patience: 5

@@ -1,0 +1,3 @@
+trainer:
+  name: graph_prediction
+  batch_size: 128

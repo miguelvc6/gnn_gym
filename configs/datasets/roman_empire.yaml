@@ -1,0 +1,8 @@
+dataset:
+  name: roman-empire
+  task: node_classification
+  source: heterophily
+  root: data/pyg
+  metric: accuracy
+  evaluator: accuracy
+  trainer: full_batch_node

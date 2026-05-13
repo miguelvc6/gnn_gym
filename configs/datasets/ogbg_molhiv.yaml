@@ -1,0 +1,8 @@
+dataset:
+  name: ogbg-molhiv
+  task: graph_binary_classification
+  source: ogb
+  root: data/ogb
+  metric: rocauc
+  evaluator: ogb
+  trainer: graph_prediction

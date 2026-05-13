@@ -1,0 +1,8 @@
+dataset:
+  name: peptides-func
+  task: graph_multilabel_classification
+  source: lrgb
+  root: data/pyg
+  metric: average_precision
+  evaluator: average_precision
+  trainer: graph_prediction

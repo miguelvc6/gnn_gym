@@ -1,0 +1,35 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data
+data/raw/
+data/processed/
+data/external/
+data/ogb/
+data/pyg/
+
+# Experiment artifacts
+artifacts/
+results/runs/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Logs
+logs/
+*.log
+wandb/
+runs/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# System
+.DS_Store
+Thumbs.db

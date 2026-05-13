@@ -1,0 +1,8 @@
+experiment:
+  name: core_gcn
+  seeds: [0]
+models: [gcn]
+datasets: [toy-node]
+training:
+  max_epochs: 5
+  patience: 5

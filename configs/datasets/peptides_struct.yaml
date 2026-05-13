@@ -1,0 +1,8 @@
+dataset:
+  name: peptides-struct
+  task: graph_regression
+  source: lrgb
+  root: data/pyg
+  metric: mae
+  evaluator: mae
+  trainer: graph_prediction

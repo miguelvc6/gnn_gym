@@ -1,0 +1,8 @@
+dataset:
+  name: ogbg-molpcba
+  task: graph_multilabel_classification
+  source: ogb
+  root: data/ogb
+  metric: average_precision
+  evaluator: ogb
+  trainer: graph_prediction

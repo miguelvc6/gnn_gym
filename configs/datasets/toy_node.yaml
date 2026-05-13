@@ -1,0 +1,13 @@
+dataset:
+  name: toy-node
+  task: node_classification
+  source: synthetic
+  metric: accuracy
+  evaluator: accuracy
+  trainer: full_batch_node
+  num_nodes: 48
+  num_features: 8
+  num_classes: 3
+
+trainer:
+  name: full_batch_node
