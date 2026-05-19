@@ -10,8 +10,11 @@ class DatasetBundle:
     task: str
     metric: str
     trainer: str
-    data: Data
     num_features: int
     num_outputs: int
+    data: Data | None = None
+    dataset: Any | None = None
+    split_idx: Any | None = None
     evaluator: str = "accuracy"
+    higher_is_better: bool = True
     metadata: dict[str, Any] | None = None

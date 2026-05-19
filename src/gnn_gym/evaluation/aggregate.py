@@ -51,3 +51,36 @@ def aggregate_runs(runs_dir: str | Path, out: str | Path | None = None) -> pd.Da
         else:
             table.to_csv(out_path, index=False)
     return table
+
+
+def summarize_runs(table: pd.DataFrame) -> pd.DataFrame:
+    if table.empty:
+        return table
+    grouped = table.groupby(["dataset", "model", "metric_name"], dropna=False)
+    return grouped.agg(
+        seeds=("seed", "count"),
+        val_mean=("val_metric", "mean"),
+        val_std=("val_metric", "std"),
+        test_mean=("test_metric", "mean"),
+        test_std=("test_metric", "std"),
+        train_time_seconds_mean=("train_time_seconds", "mean"),
+        num_parameters_mean=("num_parameters", "mean"),
+    ).reset_index()
+
+
+def export_markdown(table: pd.DataFrame, out: str | Path) -> None:
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+    columns = [str(column) for column in table.columns]
+    lines = [
+        "| " + " | ".join(columns) + " |",
+        "| " + " | ".join("---" for _ in columns) + " |",
+    ]
+    for row in table.itertuples(index=False, name=None):
+        values = ["" if pd.isna(value) else str(value) for value in row]
+        lines.append("| " + " | ".join(values) + " |")
+    Path(out).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def export_latex(table: pd.DataFrame, out: str | Path) -> None:
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+    Path(out).write_text(table.to_latex(index=False), encoding="utf-8")

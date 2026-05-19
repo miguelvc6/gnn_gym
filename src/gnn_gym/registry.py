@@ -42,4 +42,6 @@ def ensure_registrations() -> None:
     import gnn_gym.models.gcn  # noqa: F401
     import gnn_gym.models.gin  # noqa: F401
     import gnn_gym.models.mlp  # noqa: F401
+    import gnn_gym.training.graph_trainer  # noqa: F401
+    import gnn_gym.training.link_trainer  # noqa: F401
     import gnn_gym.training.node_trainer  # noqa: F401

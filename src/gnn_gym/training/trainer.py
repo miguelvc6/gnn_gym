@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import platform
 import subprocess
 import time
 from abc import ABC, abstractmethod
@@ -10,6 +11,7 @@ from typing import Any
 import torch
 import yaml
 from torch import nn
+from torch_geometric import __version__ as pyg_version
 
 from gnn_gym.data.adapters import DatasetBundle
 from gnn_gym.utils.checkpointing import save_checkpoint
@@ -32,8 +34,9 @@ class BaseTrainer(ABC):
         self.device = device
         self.logger = JsonlLogger(self.run_dir / "metrics.jsonl")
         self.best_epoch = 0
-        self.best_val_metric = float("-inf")
-        self.best_test_metric = float("-inf")
+        self.higher_is_better = dataset.higher_is_better
+        self.best_val_metric = float("-inf") if self.higher_is_better else float("inf")
+        self.best_test_metric = float("-inf") if self.higher_is_better else float("inf")
 
     @abstractmethod
     def train_epoch(self, epoch: int) -> float:
@@ -72,6 +75,12 @@ class BaseTrainer(ABC):
             "device": str(self.device),
             "best_epoch": self.best_epoch,
             "status": status,
+            "package_versions": {
+                "python": platform.python_version(),
+                "torch": torch.__version__,
+                "torch_cuda": torch.version.cuda,
+                "torch_geometric": pyg_version,
+            },
         }
         with (self.run_dir / "metadata.json").open("w", encoding="utf-8") as handle:
             json.dump(metadata, handle, indent=2, sort_keys=True)
@@ -91,7 +100,7 @@ class BaseTrainer(ABC):
             metrics = self.evaluate()
             last_metrics = metrics
             val_metric = metrics["val_metric"]
-            improved = val_metric > self.best_val_metric
+            improved = self.is_improved(val_metric)
             if improved:
                 self.best_val_metric = val_metric
                 self.best_test_metric = metrics["test_metric"]
@@ -114,6 +123,11 @@ class BaseTrainer(ABC):
         }
         self.write_metadata(final_metrics, "completed")
         return final_metrics
+
+    def is_improved(self, value: float) -> bool:
+        if self.higher_is_better:
+            return value > self.best_val_metric
+        return value < self.best_val_metric
 
 
 def git_commit() -> str | None:

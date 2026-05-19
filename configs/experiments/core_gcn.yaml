@@ -2,7 +2,7 @@ experiment:
   name: core_gcn
   seeds: [0]
 models: [gcn]
-datasets: [toy-node]
+datasets: [cora, pubmed, ogbn-arxiv]
 training:
-  max_epochs: 5
-  patience: 5
+  max_epochs: 300
+  patience: 50

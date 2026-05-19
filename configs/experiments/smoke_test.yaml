@@ -8,10 +8,11 @@ models:
 
 datasets:
   - toy-node
+  - cora
 
 training:
-  max_epochs: 5
-  patience: 5
+  max_epochs: 20
+  patience: 10
   lr: 0.01
   weight_decay: 0.0005
   grad_clip_norm: 1.0

@@ -9,11 +9,22 @@ models:
   - gin
 
 datasets:
-  - toy-node
+  - cora
+  - pubmed
+  - ogbn-arxiv
+  - ogbn-products
+  - roman-empire
+  - amazon-ratings
+  - ogbg-molhiv
+  - ogbg-molpcba
+  - peptides-func
+  - peptides-struct
+  - ogbl-collab
 
 training:
-  max_epochs: 5
-  patience: 5
-  lr: 0.01
-  weight_decay: 0.0005
+  max_epochs: 300
+  patience: 50
+  batch_size: 1024
+  lr: 0.001
+  weight_decay: 0.0001
   grad_clip_norm: 1.0

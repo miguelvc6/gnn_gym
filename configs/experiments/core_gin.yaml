@@ -2,7 +2,7 @@ experiment:
   name: core_gin
   seeds: [0]
 models: [gin]
-datasets: [toy-node]
+datasets: [cora, pubmed, ogbg-molhiv]
 training:
-  max_epochs: 5
-  patience: 5
+  max_epochs: 300
+  patience: 50

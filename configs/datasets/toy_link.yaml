@@ -1,0 +1,12 @@
+dataset:
+  name: toy-link
+  task: link_prediction
+  source: synthetic
+  metric: hits@50
+  evaluator: hits@50
+  trainer: link_prediction
+  num_nodes: 32
+  num_features: 8
+
+trainer:
+  name: link_prediction

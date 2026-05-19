@@ -7,7 +7,12 @@ import typer
 from rich.console import Console
 
 from gnn_gym.data.loaders import load_dataset
-from gnn_gym.evaluation.aggregate import aggregate_runs
+from gnn_gym.evaluation.aggregate import (
+    aggregate_runs,
+    export_latex,
+    export_markdown,
+    summarize_runs,
+)
 from gnn_gym.models import build_model
 from gnn_gym.registry import TRAINER_REGISTRY, ensure_registrations
 from gnn_gym.utils.config import deep_merge, load_run_config, load_yaml
@@ -68,6 +73,9 @@ def run_training(
         config=config,
     )
     trainer_name = str(config.get("trainer", {}).get("name") or dataset_bundle.trainer)
+    if trainer_name == "full_batch_node" and dataset_bundle.trainer != "full_batch_node":
+        trainer_name = dataset_bundle.trainer
+        config.setdefault("trainer", {})["name"] = trainer_name
     if trainer_name not in TRAINER_REGISTRY:
         raise KeyError(f"Unknown trainer: {trainer_name}")
 
@@ -136,7 +144,19 @@ def evaluate(
 @app.command("export-tables")
 def export_tables(
     input: Annotated[Path, typer.Option("--input")],
+    out_dir: Annotated[Path, typer.Option("--out-dir")] = Path("results/tables"),
 ) -> None:
     if not input.exists():
         raise typer.BadParameter(f"Input does not exist: {input}")
-    console.print("Table export formats will be expanded after benchmark summaries are defined.")
+    import pandas as pd
+
+    table = pd.read_parquet(input) if input.suffix == ".parquet" else pd.read_csv(input)
+    summary = summarize_runs(table)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    summary_csv = out_dir / f"{input.stem}_mean_std.csv"
+    summary_md = out_dir / f"{input.stem}_table.md"
+    summary_tex = out_dir / f"{input.stem}_table.tex"
+    summary.to_csv(summary_csv, index=False)
+    export_markdown(summary, summary_md)
+    export_latex(summary, summary_tex)
+    console.print(f"Wrote {summary_csv}, {summary_md}, and {summary_tex}")

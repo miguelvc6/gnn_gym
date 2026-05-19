@@ -1,0 +1,14 @@
+dataset:
+  name: toy-graph
+  task: graph_binary_classification
+  source: synthetic
+  metric: average_precision
+  evaluator: average_precision
+  trainer: graph_prediction
+  num_graphs: 24
+  num_nodes_per_graph: 8
+  num_features: 6
+
+trainer:
+  name: graph_prediction
+  batch_size: 8
