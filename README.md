@@ -13,3 +13,12 @@ uv run pytest
 uv run gnngym train --model gcn --dataset toy-node --seed 0
 uv run gnngym aggregate --runs results/runs --out results/tables/toy_runs.csv
 ```
+
+## Research Notes
+
+Architecture research is organized under `research/`:
+
+- `research/PROGRAM.md` defines the agent-facing experiment protocol.
+- `research/ARCHITECTURE_IDEAS.md` is the backlog of candidate GNN architecture ideas.
+- `research/AGENT_SCRATCHPAD.md` tracks what has been tried and what to try next.
+- `research/INSIGHTS.md` stores durable conclusions from experiments.

@@ -34,3 +34,19 @@ uv run gnngym train --model gcn --dataset cora --seed 0
 - Do not commit `data/`, `artifacts/`, `results/runs/`, or model checkpoints.
 - Save final aggregated tables under `results/tables/`.
 - Use deterministic seeds where possible.
+
+## Research workflow
+
+- Use `research/PROGRAM.md` for architecture research sessions.
+- Put candidate architecture ideas in `research/ARCHITECTURE_IDEAS.md`.
+- Use `research/AGENT_SCRATCHPAD.md` for trial notes and future attempts.
+- Promote durable conclusions to `research/INSIGHTS.md`.
+- During architecture experiments, prefer changing only model files, model configs, and focused tests.
+- For autonomous hyperparameter search, iterate first on Cora and PubMed with short budgets before
+  running larger OGB, Peptides, or link-prediction benchmarks.
+- Optimize decisions on validation metrics only. Record test metrics, but do not choose configs by
+  test performance.
+- Keep a local uncommitted `research_results.tsv` ledger for experimental runs. Promote only
+  curated summaries to `results/tables/`.
+- Before long autonomous runs, prefer adding or using a sweep config/runner so each trial has
+  reproducible overrides, run IDs, and aggregation metadata.
