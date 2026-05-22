@@ -23,17 +23,14 @@ class GCN(NodeModel):
         super().__init__()
         if num_layers < 1:
             raise ValueError("num_layers must be >= 1")
+        self.output_channels = hidden_channels
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
-        if num_layers == 1:
-            self.convs.append(GCNConv(in_channels, out_channels))
-        else:
-            self.convs.append(GCNConv(in_channels, hidden_channels))
+        self.convs.append(GCNConv(in_channels, hidden_channels))
+        self.norms.append(norm_layer(norm, hidden_channels))
+        for _ in range(num_layers - 1):
+            self.convs.append(GCNConv(hidden_channels, hidden_channels))
             self.norms.append(norm_layer(norm, hidden_channels))
-            for _ in range(num_layers - 2):
-                self.convs.append(GCNConv(hidden_channels, hidden_channels))
-                self.norms.append(norm_layer(norm, hidden_channels))
-            self.convs.append(GCNConv(hidden_channels, out_channels))
         self.activation = activation
         self.dropout = dropout
         self.task = task
@@ -46,9 +43,9 @@ class GCN(NodeModel):
     ) -> torch.Tensor:
         if edge_index is None:
             raise ValueError("GCN requires edge_index")
-        for idx, conv in enumerate(self.convs[:-1]):
+        for idx, conv in enumerate(self.convs):
             x = conv(x, edge_index)
             x = self.norms[idx](x)
             x = activation(self.activation)(x)
             x = nn.functional.dropout(x, p=self.dropout, training=self.training)
-        return self.convs[-1](x, edge_index)
+        return x

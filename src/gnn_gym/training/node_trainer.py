@@ -6,6 +6,7 @@ from gnn_gym.evaluation.ogb_eval import OgbEvaluatorAdapter
 from gnn_gym.registry import register_trainer
 from gnn_gym.training.losses import cross_entropy_loss
 from gnn_gym.training.optimizers import build_optimizer
+from gnn_gym.training.schedulers import build_scheduler
 from gnn_gym.training.trainer import BaseTrainer
 
 
@@ -15,6 +16,7 @@ class FullBatchNodeTrainer(BaseTrainer):
         super().__init__(*args, **kwargs)
         self.data = self.dataset.data.to(self.device)
         self.optimizer = build_optimizer(self.model, self.config)
+        self.scheduler = build_scheduler(self.optimizer, self.config)
         self.ogb_evaluator = (
             OgbEvaluatorAdapter(self.dataset.name) if self.dataset.evaluator == "ogb" else None
         )
@@ -61,6 +63,18 @@ class FullBatchNodeTrainer(BaseTrainer):
             "test_metric": accuracy(logits[self.data.test_mask], self.data.y[self.data.test_mask]),
         }
 
+    @torch.no_grad()
+    def predict(self) -> dict[str, torch.Tensor]:
+        self.model.eval()
+        logits = self.model(self.data.x, self.data.edge_index)
+        return {
+            "logits": logits.detach().cpu(),
+            "y": self.data.y.detach().cpu(),
+            "train_mask": self.data.train_mask.detach().cpu(),
+            "val_mask": self.data.val_mask.detach().cpu(),
+            "test_mask": self.data.test_mask.detach().cpu(),
+        }
+
 
 @register_trainer("neighbor_node")
 class NeighborNodeTrainer(BaseTrainer):
@@ -75,6 +89,7 @@ class NeighborNodeTrainer(BaseTrainer):
         self.num_hops = len(list(trainer_config.get("num_neighbors", [15, 10, 5])))
         self.train_nodes = self.data.train_mask.nonzero(as_tuple=False).view(-1)
         self.optimizer = build_optimizer(self.model, self.config)
+        self.scheduler = build_scheduler(self.optimizer, self.config)
         self.ogb_evaluator = (
             OgbEvaluatorAdapter(self.dataset.name) if self.dataset.evaluator == "ogb" else None
         )
@@ -133,4 +148,16 @@ class NeighborNodeTrainer(BaseTrainer):
             ),
             "val_metric": accuracy(logits[self.data.val_mask], self.data.y[self.data.val_mask]),
             "test_metric": accuracy(logits[self.data.test_mask], self.data.y[self.data.test_mask]),
+        }
+
+    @torch.no_grad()
+    def predict(self) -> dict[str, torch.Tensor]:
+        self.model.eval()
+        logits = self.model(self.data.x, self.data.edge_index)
+        return {
+            "logits": logits.detach().cpu(),
+            "y": self.data.y.detach().cpu(),
+            "train_mask": self.data.train_mask.detach().cpu(),
+            "val_mask": self.data.val_mask.detach().cpu(),
+            "test_mask": self.data.test_mask.detach().cpu(),
         }

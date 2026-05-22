@@ -24,10 +24,11 @@ class GIN(NodeModel):
         super().__init__()
         if num_layers < 1:
             raise ValueError("num_layers must be >= 1")
+        self.output_channels = hidden_channels
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
         current = in_channels
-        for _ in range(max(0, num_layers - 1)):
+        for _ in range(num_layers):
             mlp = nn.Sequential(
                 nn.Linear(current, hidden_channels),
                 nn.ReLU(),
@@ -36,7 +37,6 @@ class GIN(NodeModel):
             self.convs.append(GINConv(mlp, train_eps=eps_trainable))
             self.norms.append(norm_layer(norm, hidden_channels))
             current = hidden_channels
-        self.out = nn.Linear(current, out_channels)
         self.activation = activation
         self.dropout = dropout
         self.task = task
@@ -54,4 +54,4 @@ class GIN(NodeModel):
             x = self.norms[idx](x)
             x = activation(self.activation)(x)
             x = nn.functional.dropout(x, p=self.dropout, training=self.training)
-        return self.out(x)
+        return x

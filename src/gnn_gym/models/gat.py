@@ -25,25 +25,20 @@ class GAT(NodeModel):
         super().__init__()
         if num_layers < 1:
             raise ValueError("num_layers must be >= 1")
+        self.output_channels = hidden_channels * heads
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
-        if num_layers == 1:
+        self.convs.append(
+            GATConv(in_channels, hidden_channels, heads=heads, dropout=attention_dropout)
+        )
+        current = hidden_channels * heads
+        self.norms.append(norm_layer(norm, current))
+        for _ in range(num_layers - 1):
             self.convs.append(
-                GATConv(in_channels, out_channels, heads=1, dropout=attention_dropout)
-            )
-        else:
-            self.convs.append(
-                GATConv(in_channels, hidden_channels, heads=heads, dropout=attention_dropout)
+                GATConv(current, hidden_channels, heads=heads, dropout=attention_dropout)
             )
             current = hidden_channels * heads
             self.norms.append(norm_layer(norm, current))
-            for _ in range(num_layers - 2):
-                self.convs.append(
-                    GATConv(current, hidden_channels, heads=heads, dropout=attention_dropout)
-                )
-                current = hidden_channels * heads
-                self.norms.append(norm_layer(norm, current))
-            self.convs.append(GATConv(current, out_channels, heads=1, concat=False))
         self.activation = activation
         self.dropout = dropout
         self.task = task
@@ -56,9 +51,9 @@ class GAT(NodeModel):
     ) -> torch.Tensor:
         if edge_index is None:
             raise ValueError("GAT requires edge_index")
-        for idx, conv in enumerate(self.convs[:-1]):
+        for idx, conv in enumerate(self.convs):
             x = conv(x, edge_index)
             x = self.norms[idx](x)
             x = activation(self.activation)(x)
             x = nn.functional.dropout(x, p=self.dropout, training=self.training)
-        return self.convs[-1](x, edge_index)
+        return x

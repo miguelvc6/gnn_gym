@@ -23,9 +23,10 @@ class MLP(NodeModel):
         super().__init__()
         if num_layers < 1:
             raise ValueError("num_layers must be >= 1")
+        self.output_channels = hidden_channels
         layers: list[nn.Module] = []
         current = in_channels
-        for _layer in range(max(0, num_layers - 1)):
+        for _layer in range(max(0, num_layers)):
             layers.extend(
                 [
                     nn.Linear(current, hidden_channels),
@@ -35,7 +36,6 @@ class MLP(NodeModel):
                 ]
             )
             current = hidden_channels
-        layers.append(nn.Linear(current, out_channels))
         self.net = nn.Sequential(*layers)
         self.task = task
 

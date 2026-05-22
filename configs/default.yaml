@@ -6,6 +6,9 @@ training:
   patience: 20
   lr: 0.01
   weight_decay: 0.0005
+  scheduler: none
+  step_size: 50
+  gamma: 0.5
   grad_clip_norm: 1.0
   seed: 0
 

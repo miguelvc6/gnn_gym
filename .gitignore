@@ -26,6 +26,7 @@ logs/
 *.log
 wandb/
 runs/
+research_results.tsv
 
 # Notebooks
 .ipynb_checkpoints/

@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import json
+import sys
+import traceback
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated
 
 import typer
+import yaml
 from rich.console import Console
 
 from gnn_gym.data.loaders import load_dataset
@@ -13,9 +18,11 @@ from gnn_gym.evaluation.aggregate import (
     export_markdown,
     summarize_runs,
 )
+from gnn_gym.experiments.sweep import append_research_result, expand_sweep
 from gnn_gym.models import build_model
 from gnn_gym.registry import TRAINER_REGISTRY, ensure_registrations
-from gnn_gym.utils.config import deep_merge, load_run_config, load_yaml
+from gnn_gym.training.trainer import git_commit
+from gnn_gym.utils.config import deep_merge, load_run_config, load_yaml, parse_override, set_dotted
 from gnn_gym.utils.device import get_device
 from gnn_gym.utils.hashing import config_hash
 from gnn_gym.utils.paths import make_run_dir
@@ -25,14 +32,47 @@ app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 
+class Tee:
+    def __init__(self, *streams: object) -> None:
+        self.streams = streams
+
+    def write(self, data: str) -> int:
+        for stream in self.streams:
+            stream.write(data)
+            stream.flush()
+        return len(data)
+
+    def flush(self) -> None:
+        for stream in self.streams:
+            stream.flush()
+
+
+@contextmanager
+def tee_run_logs(run_dir: Path) -> object:
+    stdout_path = run_dir / "stdout.log"
+    stderr_path = run_dir / "stderr.log"
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    with stdout_path.open("a", encoding="utf-8") as stdout_file:
+        with stderr_path.open("a", encoding="utf-8") as stderr_file:
+            sys.stdout = Tee(original_stdout, stdout_file)  # type: ignore[assignment]
+            sys.stderr = Tee(original_stderr, stderr_file)  # type: ignore[assignment]
+            try:
+                yield
+            finally:
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
+
+
 @app.command()
 def train(
-    model: Annotated[str, typer.Option("--model")],
-    dataset: Annotated[str, typer.Option("--dataset")],
+    model: Annotated[str | None, typer.Option("--model")] = None,
+    dataset: Annotated[str | None, typer.Option("--dataset")] = None,
     seed: Annotated[int, typer.Option("--seed")] = 0,
     override: Annotated[list[str] | None, typer.Option("--override")] = None,
     runs_dir: Annotated[Path, typer.Option("--runs-dir")] = Path("results/runs"),
     device: Annotated[str, typer.Option("--device")] = "auto",
+    resume: Annotated[Path | None, typer.Option("--resume")] = None,
 ) -> Path:
     run_dir = run_training(
         model_name=model,
@@ -41,22 +81,41 @@ def train(
         overrides=override or [],
         runs_dir=runs_dir,
         device_name=device,
+        resume_dir=resume,
     )
     console.print(str(run_dir))
     return run_dir
 
 
 def run_training(
-    model_name: str,
-    dataset_name: str,
+    model_name: str | None,
+    dataset_name: str | None,
     seed: int,
     overrides: list[str] | None = None,
     runs_dir: str | Path = "results/runs",
     device_name: str = "auto",
     base_config: dict[str, object] | None = None,
+    resume_dir: str | Path | None = None,
+    capture_logs: bool = True,
 ) -> Path:
     ensure_registrations()
-    config = load_run_config(model_name, dataset_name, overrides)
+    if resume_dir is not None:
+        run_dir = Path(resume_dir)
+        config_path = run_dir / "resolved_config.yaml"
+        if not config_path.exists():
+            config_path = run_dir / "config.yaml"
+        config = load_yaml(config_path)
+        model_name = str(model_name or config["model"]["name"])
+        dataset_name = str(dataset_name or config["dataset"]["name"])
+        if overrides:
+            for raw in overrides:
+                key, value = parse_override(raw)
+                set_dotted(config, key, value)
+    else:
+        if model_name is None or dataset_name is None:
+            raise typer.BadParameter("--model and --dataset are required unless --resume is used")
+        config = load_run_config(model_name, dataset_name, overrides)
+        run_dir = None
     if base_config:
         config = deep_merge(config, base_config)
     config.setdefault("training", {})["seed"] = seed
@@ -64,31 +123,90 @@ def run_training(
     config["config_hash"] = digest
 
     set_seed(seed)
-    dataset_bundle = load_dataset(dataset_name, config)
-    model = build_model(
-        name=model_name,
-        in_channels=dataset_bundle.num_features,
-        out_channels=dataset_bundle.num_outputs,
-        task=dataset_bundle.task,
-        config=config,
-    )
-    trainer_name = str(config.get("trainer", {}).get("name") or dataset_bundle.trainer)
-    if trainer_name == "full_batch_node" and dataset_bundle.trainer != "full_batch_node":
-        trainer_name = dataset_bundle.trainer
-        config.setdefault("trainer", {})["name"] = trainer_name
-    if trainer_name not in TRAINER_REGISTRY:
-        raise KeyError(f"Unknown trainer: {trainer_name}")
+    if run_dir is None:
+        run_dir = make_run_dir(runs_dir, str(model_name), str(dataset_name), seed, digest)
 
-    run_dir = make_run_dir(runs_dir, model_name, dataset_name, seed, digest)
-    trainer = TRAINER_REGISTRY[trainer_name](
-        model=model,
-        dataset=dataset_bundle,
-        config=config,
-        run_dir=run_dir,
-        device=get_device(device_name),
-    )
-    trainer.run()
+    try:
+        context = tee_run_logs(run_dir) if capture_logs else nullcontext()
+        with context:
+            dataset_bundle = load_dataset(str(dataset_name), config)
+            model = build_model(
+                name=str(model_name),
+                in_channels=dataset_bundle.num_features,
+                out_channels=dataset_bundle.num_outputs,
+                task=dataset_bundle.task,
+                config=config,
+            )
+            trainer_name = str(config.get("trainer", {}).get("name") or dataset_bundle.trainer)
+            if trainer_name == "full_batch_node" and dataset_bundle.trainer != "full_batch_node":
+                trainer_name = dataset_bundle.trainer
+                config.setdefault("trainer", {})["name"] = trainer_name
+            if trainer_name not in TRAINER_REGISTRY:
+                raise KeyError(f"Unknown trainer: {trainer_name}")
+
+            trainer = TRAINER_REGISTRY[trainer_name](
+                model=model,
+                dataset=dataset_bundle,
+                config=config,
+                run_dir=run_dir,
+                device=get_device(device_name),
+                resume_from=resume_dir,
+            )
+            trainer.run()
+    except Exception as error:
+        write_failed_run(run_dir, config, str(model_name), str(dataset_name), seed, error)
+        raise
     return run_dir
+
+
+@contextmanager
+def nullcontext() -> object:
+    yield
+
+
+def write_failed_run(
+    run_dir: Path,
+    config: dict[str, object],
+    model_name: str,
+    dataset_name: str,
+    seed: int,
+    error: BaseException,
+) -> None:
+    run_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("config.yaml", "resolved_config.yaml"):
+        with (run_dir / name).open("w", encoding="utf-8") as handle:
+            yaml.safe_dump(config, handle, sort_keys=True)
+    metadata = {
+        "run_id": run_dir.name,
+        "experiment_name": config.get("experiment", {}).get("name", "manual"),
+        "model": model_name,
+        "dataset": dataset_name,
+        "task": config.get("dataset", {}).get("task"),
+        "seed": seed,
+        "git_commit": git_commit(),
+        "config_hash": config.get("config_hash"),
+        "device": device_name_from_config(config),
+        "best_epoch": 0,
+        "status": "failed",
+    }
+    final_metrics = {
+        "metric_name": config.get("dataset", {}).get("metric"),
+        "best_epoch": 0,
+        "best_val_metric": None,
+        "test_metric": None,
+        "error": f"{type(error).__name__}: {error}",
+    }
+    (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    (run_dir / "final_metrics.json").write_text(
+        json.dumps(final_metrics, indent=2),
+        encoding="utf-8",
+    )
+    with (run_dir / "stderr.log").open("a", encoding="utf-8") as handle:
+        handle.write("".join(traceback.format_exception(error)))
+
+
+def device_name_from_config(config: dict[str, object]) -> str:
+    return str(config.get("device", "unknown"))
 
 
 @app.command("run-experiment")
@@ -118,6 +236,54 @@ def run_experiment(
                     base_config=shared,
                 )
                 console.print(str(run_dir))
+
+
+@app.command("run-sweep")
+def run_sweep(
+    config: Annotated[Path, typer.Option("--config")],
+    runs_dir: Annotated[Path, typer.Option("--runs-dir")] = Path("results/runs"),
+    device: Annotated[str, typer.Option("--device")] = "auto",
+) -> None:
+    sweep_config = load_yaml(config)
+    models = sweep_config.get("models", [])
+    datasets = sweep_config.get("datasets", [])
+    seeds = sweep_config.get("experiment", {}).get("seeds", [0])
+    override_grid = expand_sweep(sweep_config)
+    shared = {
+        key: value
+        for key, value in sweep_config.items()
+        if key not in {"models", "datasets", "sweep"}
+    }
+    experiment = sweep_config.get("experiment", {})
+    write_research_results = bool(experiment.get("write_research_results", False))
+    research_results_path = Path(experiment.get("research_results_path", "research_results.tsv"))
+    for model_name in models:
+        for dataset_name in datasets:
+            for seed in seeds:
+                for sweep_overrides in override_grid:
+                    try:
+                        run_dir = run_training(
+                            model_name=str(model_name),
+                            dataset_name=str(dataset_name),
+                            seed=int(seed),
+                            overrides=sweep_overrides,
+                            runs_dir=runs_dir,
+                            device_name=device,
+                            base_config=shared,
+                        )
+                        if write_research_results:
+                            append_research_result(
+                                research_results_path,
+                                run_dir,
+                                sweep_overrides,
+                                status="completed",
+                            )
+                        console.print(str(run_dir))
+                    except Exception as error:
+                        console.print(
+                            f"FAILED {model_name}/{dataset_name}/seed-{seed}: {error}",
+                            style="red",
+                        )
 
 
 @app.command()

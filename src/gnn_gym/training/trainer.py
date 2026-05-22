@@ -11,10 +11,12 @@ from typing import Any
 import torch
 import yaml
 from torch import nn
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 from torch_geometric import __version__ as pyg_version
 
 from gnn_gym.data.adapters import DatasetBundle
-from gnn_gym.utils.checkpointing import save_checkpoint
+from gnn_gym.utils.checkpointing import load_checkpoint, save_checkpoint
 from gnn_gym.utils.logging import JsonlLogger
 
 
@@ -26,17 +28,20 @@ class BaseTrainer(ABC):
         config: dict[str, Any],
         run_dir: str | Path,
         device: torch.device,
+        resume_from: str | Path | None = None,
     ) -> None:
         self.model = model.to(device)
         self.dataset = dataset
         self.config = config
         self.run_dir = Path(run_dir)
         self.device = device
+        self.resume_from = Path(resume_from) if resume_from is not None else None
         self.logger = JsonlLogger(self.run_dir / "metrics.jsonl")
         self.best_epoch = 0
         self.higher_is_better = dataset.higher_is_better
         self.best_val_metric = float("-inf") if self.higher_is_better else float("inf")
         self.best_test_metric = float("-inf") if self.higher_is_better else float("inf")
+        self.start_epoch = 1
 
     @abstractmethod
     def train_epoch(self, epoch: int) -> float:
@@ -52,10 +57,37 @@ class BaseTrainer(ABC):
             {
                 "epoch": epoch,
                 "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict()
+                if hasattr(self, "optimizer")
+                else None,
+                "scheduler_state_dict": self.scheduler.state_dict()
+                if getattr(self, "scheduler", None) is not None
+                else None,
                 "metrics": metrics,
                 "config": self.config,
             },
         )
+
+    def load_checkpoint_if_available(self) -> None:
+        if self.resume_from is None:
+            return
+        checkpoint_path = self.resume_from / "checkpoint_last.pt"
+        checkpoint = load_checkpoint(checkpoint_path, map_location=str(self.device))
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer = getattr(self, "optimizer", None)
+        optimizer_state = checkpoint.get("optimizer_state_dict")
+        if isinstance(optimizer, Optimizer) and optimizer_state is not None:
+            optimizer.load_state_dict(optimizer_state)
+        scheduler = getattr(self, "scheduler", None)
+        scheduler_state = checkpoint.get("scheduler_state_dict")
+        if isinstance(scheduler, LRScheduler) and scheduler_state is not None:
+            scheduler.load_state_dict(scheduler_state)
+        metrics = checkpoint.get("metrics", {})
+        if "val_metric" in metrics:
+            self.best_val_metric = float(metrics["val_metric"])
+            self.best_test_metric = float(metrics.get("test_metric", self.best_test_metric))
+            self.best_epoch = int(checkpoint.get("epoch", 0))
+        self.start_epoch = int(checkpoint["epoch"]) + 1
 
     def write_config_files(self) -> None:
         for name in ("config.yaml", "resolved_config.yaml"):
@@ -87,15 +119,29 @@ class BaseTrainer(ABC):
         with (self.run_dir / "final_metrics.json").open("w", encoding="utf-8") as handle:
             json.dump(final_metrics, handle, indent=2, sort_keys=True)
 
+    def write_failure_metadata(self, error: BaseException) -> None:
+        final_metrics = {
+            "metric_name": self.dataset.metric,
+            "best_epoch": self.best_epoch,
+            "best_val_metric": None,
+            "test_metric": None,
+            "error": f"{type(error).__name__}: {error}",
+        }
+        self.write_metadata(final_metrics, "failed")
+
     def run(self) -> dict[str, Any]:
         self.write_config_files()
+        self.load_checkpoint_if_available()
+        if torch.cuda.is_available() and self.device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(self.device)
         start = time.perf_counter()
         training = self.config["training"]
         max_epochs = int(training.get("max_epochs", 100))
         patience = int(training.get("patience", max_epochs))
 
         last_metrics: dict[str, float] = {}
-        for epoch in range(1, max_epochs + 1):
+        epoch = self.start_epoch - 1
+        for epoch in range(self.start_epoch, max_epochs + 1):
             loss = self.train_epoch(epoch)
             metrics = self.evaluate()
             last_metrics = metrics
@@ -107,10 +153,20 @@ class BaseTrainer(ABC):
                 self.best_epoch = epoch
                 self.save_checkpoint("checkpoint_best.pt", epoch, metrics)
             self.logger.log({"epoch": epoch, "train_loss": loss, **metrics})
+            scheduler = getattr(self, "scheduler", None)
+            if scheduler is not None:
+                scheduler.step()
             if epoch - self.best_epoch >= patience:
                 break
 
         self.save_checkpoint("checkpoint_last.pt", epoch, last_metrics)
+        predictions_path = None
+        if self.config.get("artifacts", {}).get("save_predictions", False):
+            predictions_path = "predictions.pt"
+            torch.save(self.predict(), self.run_dir / predictions_path)
+        peak_gpu_memory_mb = None
+        if torch.cuda.is_available() and self.device.type == "cuda":
+            peak_gpu_memory_mb = torch.cuda.max_memory_allocated(self.device) / 1024 / 1024
         final_metrics = {
             "metric_name": self.dataset.metric,
             "best_epoch": self.best_epoch,
@@ -120,9 +176,14 @@ class BaseTrainer(ABC):
             "last_test_metric": last_metrics.get("test_metric"),
             "train_time_seconds": time.perf_counter() - start,
             "num_parameters": sum(p.numel() for p in self.model.parameters()),
+            "peak_gpu_memory_mb": peak_gpu_memory_mb,
+            "predictions_path": predictions_path,
         }
         self.write_metadata(final_metrics, "completed")
         return final_metrics
+
+    def predict(self) -> Any:
+        return self.evaluate()
 
     def is_improved(self, value: float) -> bool:
         if self.higher_is_better:

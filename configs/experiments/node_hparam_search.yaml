@@ -1,0 +1,25 @@
+experiment:
+  name: node_hparam_search
+  seeds: [0]
+  write_research_results: true
+  research_results_path: research_results.tsv
+
+models:
+  - gcn
+  - gat
+  - gin
+
+datasets:
+  - cora
+  - pubmed
+
+training:
+  max_epochs: 50
+  patience: 15
+  scheduler: none
+
+sweep:
+  model.hidden_channels: [32, 64, 128]
+  model.num_layers: [2, 3]
+  model.dropout: [0.2, 0.5]
+  training.lr: [0.01, 0.005]

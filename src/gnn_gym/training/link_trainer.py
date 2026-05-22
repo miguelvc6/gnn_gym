@@ -6,6 +6,7 @@ from gnn_gym.evaluation.metrics import hits_at_k
 from gnn_gym.evaluation.ogb_eval import OgbEvaluatorAdapter
 from gnn_gym.registry import register_trainer
 from gnn_gym.training.optimizers import build_optimizer
+from gnn_gym.training.schedulers import build_scheduler
 from gnn_gym.training.trainer import BaseTrainer
 
 
@@ -18,19 +19,17 @@ class LinkPredictionTrainer(BaseTrainer):
         self.data = self.dataset.data.to(self.device)
         self.split_edge = self.dataset.split_idx
         self.optimizer = build_optimizer(self.model, self.config)
+        self.scheduler = build_scheduler(self.optimizer, self.config)
         self.criterion = nn.BCEWithLogitsLoss()
         self.ogb_evaluator = (
             OgbEvaluatorAdapter(self.dataset.name) if self.dataset.evaluator == "ogb" else None
         )
 
     def _encode(self) -> torch.Tensor:
-        return self.model(self.data.x.float(), self.data.edge_index)
+        return self.model.encode(self.data.x.float(), self.data.edge_index)
 
-    @staticmethod
-    def _decode(z: torch.Tensor, edge: torch.Tensor) -> torch.Tensor:
-        if edge.shape[0] != 2:
-            edge = edge.t()
-        return (z[edge[0]] * z[edge[1]]).sum(dim=-1)
+    def _decode(self, z: torch.Tensor, edge: torch.Tensor) -> torch.Tensor:
+        return self.model.decode_links(z, edge)
 
     def train_epoch(self, epoch: int) -> float:
         self.model.train()
@@ -84,3 +83,21 @@ class LinkPredictionTrainer(BaseTrainer):
             "val_metric": self._split_score(z, "valid"),
             "test_metric": self._split_score(z, "test"),
         }
+
+    @torch.no_grad()
+    def predict(self) -> dict[str, dict[str, torch.Tensor]]:
+        self.model.eval()
+        z = self._encode()
+        predictions: dict[str, dict[str, torch.Tensor]] = {}
+        for split in ("train", "valid", "test"):
+            pos_edge = self.split_edge[split]["edge"].to(self.device)
+            predictions[split] = {
+                "edge": pos_edge.detach().cpu(),
+                "score": self._decode(z, pos_edge).detach().cpu(),
+            }
+            neg_edge = self.split_edge[split].get("edge_neg")
+            if neg_edge is not None:
+                neg_edge = neg_edge.to(self.device)
+                predictions[split]["edge_neg"] = neg_edge.detach().cpu()
+                predictions[split]["score_neg"] = self._decode(z, neg_edge).detach().cpu()
+        return predictions

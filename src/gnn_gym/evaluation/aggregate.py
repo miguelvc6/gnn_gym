@@ -56,7 +56,7 @@ def aggregate_runs(runs_dir: str | Path, out: str | Path | None = None) -> pd.Da
 def summarize_runs(table: pd.DataFrame) -> pd.DataFrame:
     if table.empty:
         return table
-    grouped = table.groupby(["dataset", "model", "metric_name"], dropna=False)
+    grouped = table.groupby(["task", "dataset", "model", "metric_name"], dropna=False)
     return grouped.agg(
         seeds=("seed", "count"),
         val_mean=("val_metric", "mean"),

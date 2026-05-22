@@ -5,12 +5,12 @@ from typing import Any
 import torch
 from torch import nn
 from torch_geometric.loader import DataLoader
-from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
 
 from gnn_gym.evaluation.metrics import average_precision, binary_roc_auc, mean_absolute_error
 from gnn_gym.evaluation.ogb_eval import OgbEvaluatorAdapter
 from gnn_gym.registry import register_trainer
 from gnn_gym.training.optimizers import build_optimizer
+from gnn_gym.training.schedulers import build_scheduler
 from gnn_gym.training.trainer import BaseTrainer
 
 
@@ -22,8 +22,8 @@ class GraphPredictionTrainer(BaseTrainer):
         batch_size = int(
             trainer_config.get("batch_size", self.config["training"].get("batch_size", 128))
         )
-        self.pooling = str(self.config.get("model", {}).get("pooling", "mean"))
         self.optimizer = build_optimizer(self.model, self.config)
+        self.scheduler = build_scheduler(self.optimizer, self.config)
         self.criterion = self._build_loss()
         self.loaders = self._build_loaders(batch_size)
         self.ogb_evaluator = (
@@ -62,17 +62,9 @@ class GraphPredictionTrainer(BaseTrainer):
             return nn.BCEWithLogitsLoss()
         return nn.CrossEntropyLoss()
 
-    def _pool(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
-        if self.pooling == "add":
-            return global_add_pool(x, batch)
-        if self.pooling == "max":
-            return global_max_pool(x, batch)
-        return global_mean_pool(x, batch)
-
     def _forward_batch(self, batch: Any) -> torch.Tensor:
         x = batch.x.float()
-        node_out = self.model(x, batch.edge_index, batch.batch)
-        return self._pool(node_out, batch.batch)
+        return self.model(x, batch.edge_index, batch.batch)
 
     def _loss(self, pred: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         if self.dataset.task == "graph_regression":
@@ -132,4 +124,12 @@ class GraphPredictionTrainer(BaseTrainer):
             "train_metric": self._score(train_pred, train_y),
             "val_metric": self._score(val_pred, val_y),
             "test_metric": self._score(test_pred, test_y),
+        }
+
+    @torch.no_grad()
+    def predict(self) -> dict[str, dict[str, torch.Tensor]]:
+        return {
+            split: {"pred": pred, "y": y}
+            for split in ("train", "val", "test")
+            for pred, y in [self._predict(split)]
         }
