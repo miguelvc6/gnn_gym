@@ -15,6 +15,26 @@ Follow-up:
 
 ## Insights
 
+## 2026-05-26 - Config-Level Evidence Is Required For Architecture Claims
+
+Evidence:
+
+The previous aggregate summaries grouped by task, dataset, model, and metric only. That mixed many
+hyperparameter settings into one mean/std row, making the table unsuitable for selecting exact
+architecture/config candidates across seeds.
+
+Implication:
+
+Future architecture claims must use config-level summaries grouped by `architecture_config_hash`.
+Model-level summaries are useful diagnostics for broad trends, but they are mixed-config evidence
+and must not be used to choose a winning configuration.
+
+Follow-up:
+
+Re-export existing aggregate tables with the hardened exporter before using them for future
+architecture selection. Treat `*_by_config_mean_std.csv` as evidence and `*_by_model_mean_std.csv`
+as diagnostic context.
+
 ## 2026-05-23 - Plain Encoder Versions Of Larger Belief Ideas Did Not Beat GPR
 
 Evidence:

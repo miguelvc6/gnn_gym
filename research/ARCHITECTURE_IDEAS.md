@@ -10,15 +10,35 @@ code. Keep ideas concrete enough that an agent can turn one entry into a bounded
 
 Status: idea | queued | testing | kept | discarded
 Target tasks: node | graph | link | all
-Expected benefit:
-Risk:
-Minimal experiment:
-Success criterion:
+Scientific hypothesis:
+Mechanism:
+Why this is not just a known baseline:
+Closest known related architectures:
+Expected insight if it succeeds:
+Expected insight if it fails:
+Target task family:
+Primary baseline to beat:
+Minimal falsifying experiment:
+Confirmation protocol:
+Complexity/runtime risk:
+Implementation boundary:
 
 Description:
 
 Implementation notes:
 ```
+
+## Novelty And Evidence Standard
+
+- Hyperparameter tuning is engineering work, not a novel architecture.
+- Known methods such as APPNP, GPR-GNN, GATv2, GCNII, GraphSAGE, GINE, GPS, and Graphormer should
+  be labeled as baselines unless the idea adds a genuinely new mechanism.
+- Hybridizing two known methods is not automatically novel; the entry must name the mechanism and
+  the falsifiable claim.
+- Toy datasets are crash checks only.
+- Architecture claims require config-level aggregation by `architecture_config_hash` and
+  confirmation over seeds `[0, 1, 2]`.
+- Negative results should remain here when they clarify what mechanism was tested and why it failed.
 
 ## Ideas
 

@@ -8,10 +8,17 @@ Do not use this file for final claims. Promote durable conclusions to `research/
 
 - Keep the harness fixed while evaluating an architecture idea.
 - Prefer `toy-node`, `toy-graph`, and `toy-link` for crash checks.
+- Toy metrics are never architecture evidence.
 - Use Cora/PubMed as the first real node-classification checks.
 - Use `ogbg-molhiv` as the first real graph-prediction check.
 - Avoid running `ogbn-products`, Peptides, or `ogbl-collab` during casual iteration unless the user
   explicitly wants a long run.
+- Select configs by validation metric only; record test metrics for held-out reporting.
+- Treat seed `0` as screening only and confirm promising configs across seeds `[0, 1, 2]`.
+- Use config-level aggregation by `architecture_config_hash` for claims. Model-level mixed-config
+  means are diagnostics only.
+- Every architecture idea should state a scientific hypothesis, closest known baselines, and a
+  minimal falsifying experiment before implementation.
 
 ## Experiment Log Template
 
@@ -26,6 +33,33 @@ Keep/discard:
 Notes:
 Next:
 ```
+
+## 2026-05-26 - Research Infrastructure Hardening Note
+
+Branch/commit: local uncommitted work
+Files changed: benchmark plumbing and research protocol Markdown
+Command:
+
+```bash
+uv run ruff check .
+uv run pytest
+```
+
+Result:
+
+- Added seed-independent `architecture_config_hash` protocol for config-level evidence.
+- Research claims should use `*_by_config_mean_std.csv`; `*_by_model_mean_std.csv` is mixed-config
+  diagnostic output only.
+- Edge attributes now belong in the model call path for future edge-aware graph/link models.
+- `neighbor_node` is expected to use PyG `NeighborLoader` when available; fallback is for smoke and
+  compatibility, not serious `ogbn-products` evidence.
+
+Keep/discard: keep as protocol update
+
+Next:
+
+- Re-export old aggregate tables with the new export command before using them for future claims.
+- Add edge-aware graph baselines before making strong MolHIV architecture claims.
 
 ## Tried
 

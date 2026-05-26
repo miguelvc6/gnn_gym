@@ -1,3 +1,4 @@
+import inspect
 from typing import Any
 
 import torch
@@ -21,6 +22,7 @@ class NodeEncoder(nn.Module):
         x: torch.Tensor,
         edge_index: torch.Tensor | None = None,
         batch: torch.Tensor | None = None,
+        edge_attr: torch.Tensor | None = None,
     ) -> torch.Tensor:
         raise NotImplementedError
 
@@ -73,8 +75,9 @@ class TaskModel(nn.Module):
         x: torch.Tensor,
         edge_index: torch.Tensor | None = None,
         batch: torch.Tensor | None = None,
+        edge_attr: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        return self.encoder(x, edge_index, batch)
+        return call_encoder(self.encoder, x, edge_index, batch, edge_attr)
 
     def decode_links(self, z: torch.Tensor, edge: torch.Tensor) -> torch.Tensor:
         if edge.shape[0] != 2:
@@ -86,8 +89,9 @@ class TaskModel(nn.Module):
         x: torch.Tensor,
         edge_index: torch.Tensor | None = None,
         batch: torch.Tensor | None = None,
+        edge_attr: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        z = self.encode(x, edge_index, batch)
+        z = self.encode(x, edge_index, batch, edge_attr)
         if self.task == "link_prediction":
             return z
         if self.task.startswith("graph_"):
@@ -95,6 +99,26 @@ class TaskModel(nn.Module):
                 batch = torch.zeros(z.size(0), dtype=torch.long, device=z.device)
             return self.head(z, batch)
         return self.head(z)
+
+
+def call_encoder(
+    encoder: NodeEncoder,
+    x: torch.Tensor,
+    edge_index: torch.Tensor | None,
+    batch: torch.Tensor | None,
+    edge_attr: torch.Tensor | None,
+) -> torch.Tensor:
+    if encoder_accepts_edge_attr(encoder):
+        return encoder(x, edge_index, batch, edge_attr=edge_attr)
+    return encoder(x, edge_index, batch)
+
+
+def encoder_accepts_edge_attr(encoder: NodeEncoder) -> bool:
+    signature = inspect.signature(encoder.forward)
+    return "edge_attr" in signature.parameters or any(
+        parameter.kind is inspect.Parameter.VAR_KEYWORD
+        for parameter in signature.parameters.values()
+    )
 
 
 def activation(name: str) -> nn.Module:

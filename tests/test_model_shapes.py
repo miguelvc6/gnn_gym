@@ -1,7 +1,12 @@
 import pytest
 import torch
+from torch import nn
+from torch_geometric.data import Data
 
+from gnn_gym.data.adapters import DatasetBundle
 from gnn_gym.models import build_model
+from gnn_gym.models.base import NodeModel, TaskModel
+from gnn_gym.training.graph_trainer import GraphPredictionTrainer
 
 
 @pytest.mark.parametrize(
@@ -121,3 +126,58 @@ def test_mean_max_add_graph_pooling_shape() -> None:
     logits = model(x, edge_index, batch)
 
     assert logits.shape == (2, 2)
+
+
+class EdgeAttrRecorder(NodeModel):
+    def __init__(self) -> None:
+        super().__init__()
+        self.output_channels = 4
+        self.linear = nn.Linear(5, 4)
+        self.saw_edge_attr = False
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor | None = None,
+        batch: torch.Tensor | None = None,
+        edge_attr: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        self.saw_edge_attr = edge_attr is not None
+        return self.linear(x)
+
+
+def test_graph_trainer_passes_edge_attr(tmp_path) -> None:
+    graphs = []
+    for idx in range(6):
+        x = torch.randn(4, 5)
+        edge_index = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 0]], dtype=torch.long)
+        edge_attr = torch.randn(edge_index.size(1), 3)
+        y = torch.tensor([[float(idx % 2)]])
+        graphs.append(Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y))
+    dataset = DatasetBundle(
+        name="edge-attr-toy-graph",
+        task="graph_binary_classification",
+        metric="average_precision",
+        trainer="graph_prediction",
+        evaluator="average_precision",
+        dataset={"train": graphs[:4], "val": graphs[4:5], "test": graphs[5:]},
+        num_features=5,
+        num_outputs=1,
+    )
+    encoder = EdgeAttrRecorder()
+    model = TaskModel(encoder, out_channels=1, task="graph_binary_classification")
+    trainer = GraphPredictionTrainer(
+        model=model,
+        dataset=dataset,
+        config={
+            "model": {"name": "edge_attr_recorder"},
+            "training": {"seed": 0, "lr": 0.01, "weight_decay": 0.0, "scheduler": "none"},
+            "trainer": {"name": "graph_prediction", "batch_size": 2},
+        },
+        run_dir=tmp_path,
+        device=torch.device("cpu"),
+    )
+
+    trainer.train_epoch(1)
+
+    assert encoder.saw_edge_attr

@@ -3,6 +3,8 @@
 This is the agent-facing research protocol inspired by `autoresearch/program.md`, adapted for GNN
 architecture benchmarking.
 
+For long-running architecture research, also read `research/LONG_RUNNING_RESEARCH.md`.
+
 ## Principle
 
 The benchmark harness is the control. Architecture code is the variable.
@@ -10,12 +12,73 @@ The benchmark harness is the control. Architecture code is the variable.
 Do not casually modify dataset adapters, trainers, evaluators, or aggregation when testing a new
 architecture idea. Those changes make results harder to attribute.
 
+## Evaluation Protocol For Architecture Claims
+
+- Use `val_metric` as the selection metric.
+- Record `test_metric`, but treat it as held-out reporting only.
+- Treat seed `0` results as screening signals only.
+- Confirm promising architecture/config results across seeds `[0, 1, 2]`.
+- Make architecture claims from config-level aggregation grouped by `architecture_config_hash`.
+- Do not claim a model beats a baseline from mixed-config model-level averages.
+- Do not claim a model beats a baseline unless the exact confirmed config beats the baseline mean
+  validation metric under the same budget.
+- Toy datasets are crash checks only, never evidence for architecture quality.
+- Do not compare across incompatible metrics as if they were one global score.
+
+Task-appropriate comparison points:
+
+- Cora/PubMed node classification: current confirmed `gpr_gnn`.
+- Older node comparison points: GAT, APPNP, JK-GCN, and GATv2 when relevant.
+- MolHIV graph prediction: current GIN/GCN/GAT/MLP baselines; add edge-aware baselines after
+  edge-aware models are implemented on top of the edge-attribute plumbing.
+
+## Novelty And Scientific Insight Standard
+
+Hyperparameter tuning is useful engineering, not a novel architecture. Reimplementing known methods
+such as APPNP, GPR-GNN, GATv2, GCNII, GraphSAGE, GINE, GPS, or Graphormer should be labeled as
+baseline work unless there is a genuinely new mechanism. Hybridizing two known methods is not
+automatically novel; it needs a specific mechanism and a falsifiable claim.
+
+Each architecture idea should define:
+
+- scientific hypothesis
+- mechanism
+- why this is not just a known baseline
+- closest known related architectures
+- expected insight if it succeeds
+- expected insight if it fails
+- target task family
+- primary baseline to beat
+- minimal falsifying experiment
+- confirmation protocol
+- complexity/runtime risk
+- implementation boundary
+
+Failed architectures should remain in the research memory when they clarify the hypothesis space.
+Do not hide negative results.
+
+## Long-Running Loop
+
+1. Read this protocol, `research/LONG_RUNNING_RESEARCH.md`, `research/INSIGHTS.md`, and the active
+   scratchpad.
+2. Pick or add one architecture idea with a scientific hypothesis.
+3. Check closest known baselines before calling it novel.
+4. Implement the smallest bounded version.
+5. Run toy crash checks.
+6. Run a seed-0 fast screen.
+7. Confirm only promising configs over seeds `[0, 1, 2]`.
+8. Aggregate by `architecture_config_hash`.
+9. Promote only durable conclusions to `research/INSIGHTS.md`.
+10. Keep negative results if they clarify the hypothesis space.
+11. Periodically add new ideas, but avoid repeating discarded mechanisms without a new reason.
+
 ## Setup For A Research Session
 
 1. Read:
    - `README.md`
    - `AGENTS.md`
    - `GNN_GYM_PROJECT_SPEC.md`
+   - `research/LONG_RUNNING_RESEARCH.md`
    - `research/ARCHITECTURE_IDEAS.md`
    - `research/AGENT_SCRATCHPAD.md`
    - `research/INSIGHTS.md`
@@ -97,6 +160,8 @@ Those are larger benchmark runs, not first-pass search datasets.
 - Use `val_metric` as the optimization target.
 - Record `test_metric`, but do not select hyperparameters using test performance.
 - After a promising config is found with seed `0`, confirm it with seeds `[0, 1, 2]`.
+- Compare confirmed configs using summaries grouped by `architecture_config_hash`, not mixed-config
+  model-level means.
 - Promote a config only when it improves mean validation metric or gives similar validation metric
   with simpler/cheaper settings.
 
@@ -202,6 +267,8 @@ timestamp	run_id	commit	model	dataset	seed	metric	val_metric	test_metric	best_ep
 ```
 
 Keep `results/runs/` out of git. Promote only intentional summaries under `results/tables/`.
+Use `*_by_config_mean_std.csv` for architecture/config evidence. Treat `*_by_model_mean_std.csv`
+as a mixed-config diagnostic table only.
 
 For each research batch, also add a short section to `research/AGENT_SCRATCHPAD.md` with:
 

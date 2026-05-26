@@ -1,3 +1,5 @@
+import importlib
+import pkgutil
 from collections.abc import Callable
 from typing import TypeVar
 
@@ -11,7 +13,7 @@ EVALUATOR_REGISTRY: dict[str, Callable[..., object]] = {}
 
 def _register(registry: dict[str, Callable[..., object]], kind: str, name: str) -> Callable[[T], T]:
     def decorator(obj: T) -> T:
-        if name in registry:
+        if name in registry and registry[name] is not obj:
             raise ValueError(f"{kind} already registered: {name}")
         registry[name] = obj  # type: ignore[assignment]
         return obj
@@ -38,37 +40,21 @@ def register_evaluator(name: str) -> Callable[[T], T]:
 def ensure_registrations() -> None:
     import gnn_gym.data.catalog  # noqa: F401
     import gnn_gym.evaluation.evaluators  # noqa: F401
-    import gnn_gym.models.appnp_net  # noqa: F401
-    import gnn_gym.models.bethe_gnn  # noqa: F401
-    import gnn_gym.models.cavity_gnn  # noqa: F401
-    import gnn_gym.models.confidence_appnp_net  # noqa: F401
-    import gnn_gym.models.decimation_gnn  # noqa: F401
-    import gnn_gym.models.dual_primal_gnn  # noqa: F401
-    import gnn_gym.models.entropy_gated_gnn  # noqa: F401
-    import gnn_gym.models.equilibrium_belief_gnn  # noqa: F401
-    import gnn_gym.models.frustration_gnn  # noqa: F401
-    import gnn_gym.models.gat  # noqa: F401
-    import gnn_gym.models.gated_appnp_net  # noqa: F401
-    import gnn_gym.models.gatv2  # noqa: F401
-    import gnn_gym.models.gcn  # noqa: F401
-    import gnn_gym.models.gcn2_net  # noqa: F401
-    import gnn_gym.models.gin  # noqa: F401
-    import gnn_gym.models.gpr_gnn  # noqa: F401
-    import gnn_gym.models.jk_gcn  # noqa: F401
-    import gnn_gym.models.kikuchi_gnn  # noqa: F401
-    import gnn_gym.models.loop_corrected_gnn  # noqa: F401
-    import gnn_gym.models.mlp  # noqa: F401
-    import gnn_gym.models.nb_appnp_net  # noqa: F401
-    import gnn_gym.models.nb_belief_gnn  # noqa: F401
-    import gnn_gym.models.nb_light_gnn  # noqa: F401
-    import gnn_gym.models.region_collapse_gnn  # noqa: F401
-    import gnn_gym.models.res_appnp_net  # noqa: F401
-    import gnn_gym.models.res_gin  # noqa: F401
-    import gnn_gym.models.revision_gnn  # noqa: F401
-    import gnn_gym.models.rign_gnn  # noqa: F401
-    import gnn_gym.models.survey_gnn  # noqa: F401
-    import gnn_gym.models.temp_ladder_gnn  # noqa: F401
-    import gnn_gym.models.walk_belief_transformer  # noqa: F401
+    import gnn_gym.models
     import gnn_gym.training.graph_trainer  # noqa: F401
     import gnn_gym.training.link_trainer  # noqa: F401
     import gnn_gym.training.node_trainer  # noqa: F401
+
+    _import_model_modules(gnn_gym.models)
+
+
+def _import_model_modules(package: object) -> None:
+    package_path = getattr(package, "__path__", None)
+    package_name = getattr(package, "__name__", "")
+    if package_path is None:
+        return
+    excluded = {"__init__", "base", "heads"}
+    for module_info in pkgutil.iter_modules(package_path):
+        if module_info.ispkg or module_info.name in excluded:
+            continue
+        importlib.import_module(f"{package_name}.{module_info.name}")

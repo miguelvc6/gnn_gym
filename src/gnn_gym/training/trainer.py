@@ -104,6 +104,7 @@ class BaseTrainer(ABC):
             "seed": self.config["training"]["seed"],
             "git_commit": git_commit(),
             "config_hash": self.config.get("config_hash"),
+            "architecture_config_hash": self.config.get("architecture_config_hash"),
             "device": str(self.device),
             "best_epoch": self.best_epoch,
             "status": status,

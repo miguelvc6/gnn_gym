@@ -64,7 +64,12 @@ class GraphPredictionTrainer(BaseTrainer):
 
     def _forward_batch(self, batch: Any) -> torch.Tensor:
         x = batch.x.float()
-        return self.model(x, batch.edge_index, batch.batch)
+        return self.model(
+            x,
+            batch.edge_index,
+            batch=batch.batch,
+            edge_attr=getattr(batch, "edge_attr", None),
+        )
 
     def _loss(self, pred: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         if self.dataset.task == "graph_regression":

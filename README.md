@@ -63,6 +63,10 @@ uv run gnngym aggregate --runs results/runs --out results/tables/all_runs.csv
 uv run gnngym export-tables --input results/tables/all_runs.csv
 ```
 
+`export-tables` writes config-level summaries grouped by `architecture_config_hash` and separate
+model-level summaries. Use the config-level files for architecture claims; model-level summaries can
+mix many hyperparameter settings and are diagnostics only.
+
 Example with overrides:
 
 ```bash
@@ -105,7 +109,8 @@ task capability. This keeps benchmark results attributable to the model change.
 ## Automated Research Workflow
 
 GNN Gym is built to support agent-assisted architecture research. The intended process
-is documented in [`research/PROGRAM.md`](research/PROGRAM.md), and the agent treats a
+is documented in [`research/PROGRAM.md`](research/PROGRAM.md) and
+[`research/LONG_RUNNING_RESEARCH.md`](research/LONG_RUNNING_RESEARCH.md). The agent treats a
 small set of Markdown files as persistent research memory.
 
 At the start of a research session, the agent reads:
@@ -114,6 +119,8 @@ At the start of a research session, the agent reads:
 - [`AGENTS.md`](AGENTS.md) for repository-specific operating rules
 - [`GNN_GYM_PROJECT_SPEC.md`](GNN_GYM_PROJECT_SPEC.md) for the long-term benchmark design
 - [`research/PROGRAM.md`](research/PROGRAM.md) for the experiment protocol
+- [`research/LONG_RUNNING_RESEARCH.md`](research/LONG_RUNNING_RESEARCH.md) for config-level
+  evidence rules and novelty standards
 - [`research/ARCHITECTURE_IDEAS.md`](research/ARCHITECTURE_IDEAS.md) for candidate ideas
 - [`research/AGENT_SCRATCHPAD.md`](research/AGENT_SCRATCHPAD.md) for recent trial state
 - [`research/INSIGHTS.md`](research/INSIGHTS.md) for durable conclusions
@@ -131,8 +138,10 @@ The logic is:
    discarded attempts, and next actions.
 5. Use validation metrics for decisions. Test metrics are recorded, but not used to select
    configurations.
-6. Promote only evidence-backed conclusions to `research/INSIGHTS.md`.
-7. Promote only curated result summaries to `results/tables/`; keep raw runs, checkpoints,
+6. Use `architecture_config_hash` summaries for architecture claims. Do not select from mixed-config
+   model-level averages.
+7. Promote only evidence-backed conclusions to `research/INSIGHTS.md`.
+8. Promote only curated result summaries to `results/tables/`; keep raw runs, checkpoints,
    and exploratory ledgers local.
 
 For new architecture experiments, the preferred edit boundary is:

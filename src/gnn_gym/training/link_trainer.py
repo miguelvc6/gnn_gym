@@ -26,7 +26,11 @@ class LinkPredictionTrainer(BaseTrainer):
         )
 
     def _encode(self) -> torch.Tensor:
-        return self.model.encode(self.data.x.float(), self.data.edge_index)
+        return self.model.encode(
+            self.data.x.float(),
+            self.data.edge_index,
+            edge_attr=getattr(self.data, "edge_attr", None),
+        )
 
     def _decode(self, z: torch.Tensor, edge: torch.Tensor) -> torch.Tensor:
         return self.model.decode_links(z, edge)

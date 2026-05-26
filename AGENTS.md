@@ -38,6 +38,7 @@ uv run gnngym train --model gcn --dataset cora --seed 0
 ## Research workflow
 
 - Use `research/PROGRAM.md` for architecture research sessions.
+- Use `research/LONG_RUNNING_RESEARCH.md` for config-level evaluation rules and novelty standards.
 - Put candidate architecture ideas in `research/ARCHITECTURE_IDEAS.md`.
 - Use `research/AGENT_SCRATCHPAD.md` for trial notes and future attempts.
 - Promote durable conclusions to `research/INSIGHTS.md`.
@@ -46,6 +47,13 @@ uv run gnngym train --model gcn --dataset cora --seed 0
   running larger OGB, Peptides, or link-prediction benchmarks.
 - Optimize decisions on validation metrics only. Record test metrics, but do not choose configs by
   test performance.
+- Treat seed `0` as screening only. Confirm promising architecture/config results across seeds
+  `[0, 1, 2]` before making claims.
+- Make architecture claims from config-level summaries grouped by `architecture_config_hash`, not
+  mixed-config model-level mean/std tables.
+- Toy datasets are crash checks only. Never use toy metrics as architecture evidence.
+- Do not claim novelty for known architectures or for simple hybrids unless there is an explicit
+  scientific hypothesis, mechanism, closest-baseline comparison, and falsifying experiment.
 - Keep a local uncommitted `research_results.tsv` ledger for experimental runs. Promote only
   curated summaries to `results/tables/`.
 - Before long autonomous runs, prefer adding or using a sweep config/runner so each trial has

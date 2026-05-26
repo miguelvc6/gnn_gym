@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
+
+from gnn_gym.utils.hashing import architecture_config_hash
 
 
 def collect_runs(runs_dir: str | Path) -> pd.DataFrame:
@@ -18,6 +21,9 @@ def collect_runs(runs_dir: str | Path) -> pd.DataFrame:
         if metadata_path.exists():
             with metadata_path.open("r", encoding="utf-8") as handle:
                 metadata = json.load(handle)
+        config_digest = metadata.get("architecture_config_hash")
+        if config_digest is None:
+            config_digest = _architecture_hash_from_run_dir(run_dir)
         rows.append(
             {
                 "run_id": metadata.get("run_id", run_dir.name),
@@ -35,10 +41,22 @@ def collect_runs(runs_dir: str | Path) -> pd.DataFrame:
                 "device": metadata.get("device"),
                 "git_commit": metadata.get("git_commit"),
                 "config_hash": metadata.get("config_hash"),
+                "architecture_config_hash": config_digest,
                 "status": metadata.get("status", "unknown"),
             }
         )
     return pd.DataFrame(rows)
+
+
+def _architecture_hash_from_run_dir(run_dir: Path) -> str | None:
+    for config_name in ("resolved_config.yaml", "config.yaml"):
+        config_path = run_dir / config_name
+        if not config_path.exists():
+            continue
+        with config_path.open("r", encoding="utf-8") as handle:
+            config = yaml.safe_load(handle) or {}
+        return architecture_config_hash(config)
+    return None
 
 
 def aggregate_runs(runs_dir: str | Path, out: str | Path | None = None) -> pd.DataFrame:
@@ -53,10 +71,13 @@ def aggregate_runs(runs_dir: str | Path, out: str | Path | None = None) -> pd.Da
     return table
 
 
-def summarize_runs(table: pd.DataFrame) -> pd.DataFrame:
+def summarize_runs_by_config(table: pd.DataFrame) -> pd.DataFrame:
     if table.empty:
         return table
-    grouped = table.groupby(["task", "dataset", "model", "metric_name"], dropna=False)
+    grouped = table.groupby(
+        ["task", "dataset", "model", "metric_name", "architecture_config_hash"],
+        dropna=False,
+    )
     return grouped.agg(
         seeds=("seed", "count"),
         val_mean=("val_metric", "mean"),
@@ -66,6 +87,26 @@ def summarize_runs(table: pd.DataFrame) -> pd.DataFrame:
         train_time_seconds_mean=("train_time_seconds", "mean"),
         num_parameters_mean=("num_parameters", "mean"),
     ).reset_index()
+
+
+def summarize_runs_by_model(table: pd.DataFrame) -> pd.DataFrame:
+    if table.empty:
+        return table
+    grouped = table.groupby(["task", "dataset", "model", "metric_name"], dropna=False)
+    return grouped.agg(
+        runs=("run_id", "count"),
+        architecture_configs=("architecture_config_hash", "nunique"),
+        val_mean=("val_metric", "mean"),
+        val_std=("val_metric", "std"),
+        test_mean=("test_metric", "mean"),
+        test_std=("test_metric", "std"),
+        train_time_seconds_mean=("train_time_seconds", "mean"),
+        num_parameters_mean=("num_parameters", "mean"),
+    ).reset_index()
+
+
+def summarize_runs(table: pd.DataFrame) -> pd.DataFrame:
+    return summarize_runs_by_config(table)
 
 
 def export_markdown(table: pd.DataFrame, out: str | Path) -> None:

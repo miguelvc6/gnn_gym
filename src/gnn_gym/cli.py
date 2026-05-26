@@ -17,6 +17,7 @@ from gnn_gym.evaluation.aggregate import (
     export_latex,
     export_markdown,
     summarize_runs,
+    summarize_runs_by_model,
 )
 from gnn_gym.experiments.sweep import append_research_result, expand_sweep
 from gnn_gym.models import build_model
@@ -24,7 +25,7 @@ from gnn_gym.registry import TRAINER_REGISTRY, ensure_registrations
 from gnn_gym.training.trainer import git_commit
 from gnn_gym.utils.config import deep_merge, load_run_config, load_yaml, parse_override, set_dotted
 from gnn_gym.utils.device import get_device
-from gnn_gym.utils.hashing import config_hash
+from gnn_gym.utils.hashing import architecture_config_hash, config_hash
 from gnn_gym.utils.paths import make_run_dir
 from gnn_gym.utils.seed import set_seed
 
@@ -121,6 +122,7 @@ def run_training(
     config.setdefault("training", {})["seed"] = seed
     digest = config_hash(config)
     config["config_hash"] = digest
+    config["architecture_config_hash"] = architecture_config_hash(config)
 
     set_seed(seed)
     if run_dir is None:
@@ -185,6 +187,7 @@ def write_failed_run(
         "seed": seed,
         "git_commit": git_commit(),
         "config_hash": config.get("config_hash"),
+        "architecture_config_hash": config.get("architecture_config_hash"),
         "device": device_name_from_config(config),
         "best_epoch": 0,
         "status": "failed",
@@ -318,11 +321,22 @@ def export_tables(
 
     table = pd.read_parquet(input) if input.suffix == ".parquet" else pd.read_csv(input)
     summary = summarize_runs(table)
+    model_summary = summarize_runs_by_model(table)
     out_dir.mkdir(parents=True, exist_ok=True)
-    summary_csv = out_dir / f"{input.stem}_mean_std.csv"
-    summary_md = out_dir / f"{input.stem}_table.md"
-    summary_tex = out_dir / f"{input.stem}_table.tex"
+    summary_csv = out_dir / f"{input.stem}_by_config_mean_std.csv"
+    summary_md = out_dir / f"{input.stem}_by_config_table.md"
+    summary_tex = out_dir / f"{input.stem}_by_config_table.tex"
+    model_summary_csv = out_dir / f"{input.stem}_by_model_mean_std.csv"
+    model_summary_md = out_dir / f"{input.stem}_by_model_table.md"
+    model_summary_tex = out_dir / f"{input.stem}_by_model_table.tex"
     summary.to_csv(summary_csv, index=False)
     export_markdown(summary, summary_md)
     export_latex(summary, summary_tex)
-    console.print(f"Wrote {summary_csv}, {summary_md}, and {summary_tex}")
+    model_summary.to_csv(model_summary_csv, index=False)
+    export_markdown(model_summary, model_summary_md)
+    export_latex(model_summary, model_summary_tex)
+    console.print(
+        "Wrote "
+        f"{summary_csv}, {summary_md}, {summary_tex}, "
+        f"{model_summary_csv}, {model_summary_md}, and {model_summary_tex}"
+    )
