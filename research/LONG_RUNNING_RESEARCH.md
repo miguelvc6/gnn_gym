@@ -81,6 +81,35 @@ Future agents must not:
 - compare across incompatible metrics as if they were one global score
 - hide negative results
 
+## Synthetic Diagnostic Shortcut And Audit Protocol
+
+Synthetic graph diagnostics are useful only when the intended mechanism is separated from cheaper
+shortcuts. Before using a synthetic metric as architecture evidence, run the reusable suite in
+`gnn_gym.evaluation.synthetic_diagnostics` or an idea-specific adapter built on it.
+
+Required shortcut controls:
+
+- class prevalence / random AP
+- graph statistics logistic and MLP
+- candidate detector counts
+- candidate detector histograms
+- same-feature logistic and MLP using exactly the candidate's exposed detector features
+- same-capacity merged neural control over all shortcut and detector features
+- an ablation that removes the proposed decomposition while keeping parameters comparable
+
+Required graph audits:
+
+- random node relabeling
+- edge-order invariance
+- batch-composition invariance
+- capped-enumeration / tie-stress tests for any bounded selector
+- cache-key stability, including edge-order stability for graph-level caches
+- explicit invalidation records for metrics produced before correctness-changing fixes
+
+Do not claim improvement from synthetic metrics unless the candidate beats the exact shortcut
+controls and same-capacity controls by validation metric. Test metrics remain held-out reporting
+only. If a shortcut or audit is not applicable, the experiment note must say why.
+
 ## Infrastructure Notes
 
 - `config_hash` identifies a resolved run and can vary by seed.
@@ -92,4 +121,3 @@ Future agents must not:
   backend is available; the fallback path is for smoke and compatibility only.
 - Graph and link trainers pass `edge_attr` when present. Existing models may ignore it, but future
   edge-aware models can accept `edge_attr` in `forward`.
-

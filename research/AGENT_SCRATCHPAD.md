@@ -900,3 +900,41 @@ Next:
 - Run lint/tests after the expanded model set.
 - If continuing, try APPNP weight decay and alpha refinements, or a graph-specific GIN pooling
   experiment on `ogbg-molhiv` with a small run budget.
+
+## 2026-05-26 - Synthetic Diagnostic Shortcut/Audit Suite
+
+Scope:
+
+- Added reusable synthetic diagnostic helpers in `gnn_gym.evaluation.synthetic_diagnostics`.
+- The suite covers class-prevalence AP, graph-statistic logistic/MLP controls, candidate detector
+  count/histogram controls, same-feature controls, same-capacity merged controls, model prediction
+  invariance audits, cache-key audits, capped-enumeration tie stress, and metric-invalidation
+  records.
+- Applied the suite first in the existing CycleCutGNN-lite and DualShadowGNN-lite worktrees.
+
+Branch-local outputs:
+
+- CycleCutGNN-lite:
+  `results/tables/cycle_cut_gnn_lite_synthetic_diagnostic_audit.json` and
+  `results/tables/cycle_cut_gnn_lite_graph_audit_suite.json`.
+- DualShadowGNN-lite:
+  `results/tables/dual_shadow_gnn_synthetic_diagnostic_audit.json` and
+  `results/tables/dual_shadow_gnn_graph_audit_suite.json`.
+
+Findings:
+
+- CycleCutGNN-lite's best prior validation AP (`cycle_only_mean_val_ap=0.7686`) only narrowly
+  clears the strongest exact same-feature / merged control (`0.7576`). Treat this as weak synthetic
+  support, not a broad architecture claim.
+- DualShadowGNN-lite's confirmed validation AP (`0.8802`) clears the strongest new control
+  (`0.8571`), but the margin is modest and the capped-enumeration stress audit remains a clear risk
+  under tight face caps.
+- Both branch-local graph audits passed edge-order, random relabeling, and batch-composition checks
+  on small audit graphs. Both current raw model cache keys are edge-order unstable, so cache hits are
+  not canonical even when predictions are stable.
+
+Policy update:
+
+- Future synthetic diagnostic claims must beat exact shortcut and same-capacity controls by
+  validation metric before being described as support. Older shortcut-only files are explicitly
+  invalidated by replacement audit JSON when the suite adds correctness-relevant controls.
