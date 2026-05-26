@@ -2,11 +2,17 @@
 \toprule
 task & dataset & model & metric_name & runs & architecture_configs & val_mean & val_std & test_mean & test_std & train_time_seconds_mean & num_parameters_mean \\
 \midrule
+graph_binary_classification & normal-tree-backedge & gcn & average_precision & 3 & 1 & 0.416667 & 0.000000 & 0.416667 & 0.000000 & 3.217837 & 5505.000000 \\
+graph_binary_classification & normal-tree-backedge & gin & average_precision & 6 & 3 & 0.708333 & 0.319505 & 0.708333 & 0.319505 & 2.810306 & 8708.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & 27 & 10 & 0.685936 & 0.136640 & 0.544853 & 0.198010 & 18.043998 & 35656.111111 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 15 & 9 & 0.681357 & 0.110737 & 0.601804 & 0.101387 & 20.023695 & 83822.666667 \\
 graph_binary_classification & ogbg-molhiv & gat & rocauc & 3 & 1 & 0.737954 & 0.003584 & 0.690910 & 0.001210 & 115.429836 & 18945.000000 \\
 graph_binary_classification & ogbg-molhiv & gcn & rocauc & 3 & 1 & 0.754262 & 0.011362 & 0.679831 & 0.010170 & 124.004140 & 5121.000000 \\
 graph_binary_classification & ogbg-molhiv & gin & rocauc & 5 & 3 & 0.750167 & 0.022371 & 0.694450 & 0.039664 & 93.176457 & 25194.400000 \\
 graph_binary_classification & ogbg-molhiv & mlp & rocauc & 3 & 1 & 0.676415 & 0.010212 & 0.633297 & 0.012713 & 68.691395 & 5121.000000 \\
 graph_binary_classification & toy-graph & gin & average_precision & 2 & 2 & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 0.832290 & 14179.500000 \\
+graph_binary_classification & toy-graph & normal_tree_backedge_gnn & average_precision & 1 & 1 & 0.833333 & NaN & 0.000000 & NaN & 1.128250 & 9457.000000 \\
+graph_binary_classification & toy-graph & tree_pack_gnn & average_precision & 1 & 1 & 0.750000 & NaN & 0.000000 & NaN & 1.467505 & 6004.000000 \\
 link_prediction & toy-link & gcn & hits@50 & 1 & 1 & 1.000000 & NaN & 1.000000 & NaN & 0.616605 & 4992.000000 \\
 node_classification & cora & appnp_net & accuracy & 92 & 88 & 0.586630 & 0.229480 & 0.597576 & 0.226103 & 0.811074 & 170480.739130 \\
 node_classification & cora & bethe_gnn & accuracy & 16 & 16 & 0.326250 & 0.056986 & 0.320750 & 0.053480 & 0.710708 & 262279.000000 \\
@@ -23,7 +29,7 @@ node_classification & cora & gatv2 & accuracy & 27 & 25 & 0.638000 & 0.114576 & 
 node_classification & cora & gcn & accuracy & 27 & 25 & 0.346741 & 0.161324 & 0.344148 & 0.164918 & 0.804794 & 115007.888889 \\
 node_classification & cora & gcn2_net & accuracy & 48 & 48 & 0.264667 & 0.099511 & 0.269104 & 0.105525 & 1.024724 & 235708.333333 \\
 node_classification & cora & gin & accuracy & 22 & 18 & 0.513364 & 0.165559 & 0.508091 & 0.169383 & 1.223400 & 205775.818182 \\
-node_classification & cora & gpr_gnn & accuracy & 74 & 70 & 0.640351 & 0.245099 & 0.643689 & 0.244586 & 1.048050 & 167030.216216 \\
+node_classification & cora & gpr_gnn & accuracy & 75 & 71 & 0.640667 & 0.243453 & 0.644280 & 0.242982 & 1.060444 & 166091.920000 \\
 node_classification & cora & jk_gcn & accuracy & 24 & 24 & 0.465083 & 0.153738 & 0.468208 & 0.162072 & 0.721000 & 75351.000000 \\
 node_classification & cora & kikuchi_gnn & accuracy & 16 & 16 & 0.399375 & 0.082729 & 0.394250 & 0.076475 & 0.585101 & 210887.000000 \\
 node_classification & cora & loop_corrected_gnn & accuracy & 16 & 16 & 0.274250 & 0.065356 & 0.278125 & 0.070992 & 0.958776 & 185239.000000 \\
@@ -36,6 +42,7 @@ node_classification & cora & res_appnp_net & accuracy & 35 & 33 & 0.463771 & 0.3
 node_classification & cora & res_gin & accuracy & 24 & 24 & 0.323083 & 0.087862 & 0.314083 & 0.098327 & 0.916476 & 249815.000000 \\
 node_classification & cora & revision_gnn & accuracy & 11 & 9 & 0.524909 & 0.188708 & 0.535909 & 0.188800 & 1.972483 & 523003.363636 \\
 node_classification & cora & rign_gnn & accuracy & 32 & 32 & 0.511000 & 0.045539 & 0.489125 & 0.038140 & 1.513174 & 599527.000000 \\
+node_classification & cora & sep_bottleneck_gnn & accuracy & 7 & 5 & 0.209143 & 0.246054 & 0.205143 & 0.257500 & 2.066620 & 104496.285714 \\
 node_classification & cora & survey_gnn & accuracy & 32 & 32 & 0.513313 & 0.131970 & 0.529031 & 0.134647 & 1.986509 & 517368.000000 \\
 node_classification & cora & temp_ladder_gnn & accuracy & 32 & 32 & 0.430625 & 0.097066 & 0.442281 & 0.098905 & 1.377717 & 122834.500000 \\
 node_classification & cora & walk_belief_transformer & accuracy & 8 & 8 & 0.574500 & 0.106748 & 0.564875 & 0.106054 & 0.745965 & 98055.000000 \\
@@ -68,6 +75,7 @@ node_classification & pubmed & res_appnp_net & accuracy & 38 & 34 & 0.635368 & 0
 node_classification & pubmed & res_gin & accuracy & 24 & 24 & 0.487500 & 0.077928 & 0.465625 & 0.074947 & 0.708198 & 159859.000000 \\
 node_classification & pubmed & revision_gnn & accuracy & 11 & 9 & 0.629818 & 0.108648 & 0.626182 & 0.107731 & 1.586167 & 327159.363636 \\
 node_classification & pubmed & rign_gnn & accuracy & 32 & 32 & 0.687125 & 0.013762 & 0.693156 & 0.017003 & 2.000804 & 330435.000000 \\
+node_classification & pubmed & sep_bottleneck_gnn & accuracy & 7 & 4 & 0.662000 & 0.180303 & 0.645429 & 0.168126 & 6.688618 & 42686.571429 \\
 node_classification & pubmed & survey_gnn & accuracy & 32 & 32 & 0.695375 & 0.062351 & 0.677688 & 0.053282 & 1.902170 & 248276.000000 \\
 node_classification & pubmed & temp_ladder_gnn & accuracy & 32 & 32 & 0.593250 & 0.120303 & 0.595844 & 0.116293 & 1.212622 & 55366.500000 \\
 node_classification & pubmed & walk_belief_transformer & accuracy & 8 & 8 & 0.652000 & 0.047940 & 0.652000 & 0.031250 & 1.093358 & 53075.000000 \\
@@ -99,6 +107,7 @@ node_classification & toy-node & res_appnp_net & accuracy & 1 & 1 & 0.500000 & N
 node_classification & toy-node & res_gin & accuracy & 1 & 1 & 0.600000 & NaN & 0.300000 & NaN & 0.973691 & 34695.000000 \\
 node_classification & toy-node & revision_gnn & accuracy & 1 & 1 & 0.700000 & NaN & 0.500000 & NaN & 1.012854 & 100803.000000 \\
 node_classification & toy-node & rign_gnn & accuracy & 1 & 1 & 0.600000 & NaN & 0.300000 & NaN & 1.055788 & 76675.000000 \\
+node_classification & toy-node & sep_bottleneck_gnn & accuracy & 4 & 3 & 0.500000 & 0.000000 & 0.300000 & 0.000000 & 0.868535 & 12576.750000 \\
 node_classification & toy-node & survey_gnn & accuracy & 1 & 1 & 0.600000 & NaN & 0.700000 & NaN & 1.048570 & 35972.000000 \\
 node_classification & toy-node & temp_ladder_gnn & accuracy & 1 & 1 & 0.600000 & NaN & 0.300000 & NaN & 0.801766 & 6393.000000 \\
 node_classification & toy-node & walk_belief_transformer & accuracy & 1 & 1 & 0.500000 & NaN & 0.300000 & NaN & 1.027767 & 46787.000000 \\

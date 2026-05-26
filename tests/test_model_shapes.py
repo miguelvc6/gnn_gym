@@ -36,8 +36,11 @@ from gnn_gym.training.graph_trainer import GraphPredictionTrainer
         "nb_appnp_net",
         "nb_belief_gnn",
         "nb_light_gnn",
+        "normal_tree_backedge_gnn",
+        "tree_pack_gnn",
         "res_appnp_net",
         "region_collapse_gnn",
+        "sep_bottleneck_gnn",
         "entropy_gated_gnn",
         "rign_gnn",
         "temp_ladder_gnn",
@@ -76,6 +79,16 @@ def test_model_output_shape(model_name: str) -> None:
             "max_triangles": 8,
             "num_rounds": 2,
             "walk_length": 3,
+            "gate_hidden_channels": 4,
+            "separator_residual_init": 0.001,
+            "separator_token_init": 0.001,
+            "separator_max_scale": 0.1,
+            "num_tree_orders": 2,
+            "num_trees": 4,
+            "tree_start_idx": 0,
+            "tree_pooling": "gated",
+            "use_graph_channel": True,
+            "use_tree_channel": True,
         }
     }
     model = build_model(

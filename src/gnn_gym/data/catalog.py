@@ -137,6 +137,169 @@ def load_toy_graph_dataset(config: dict[str, Any] | None = None) -> DatasetBundl
     )
 
 
+@register_dataset("normal-tree-backedge")
+def load_normal_tree_backedge_dataset(config: dict[str, Any] | None = None) -> DatasetBundle:
+    dataset_config = _dataset_config(config)
+    num_graphs = int(dataset_config.get("num_graphs", 120))
+    num_nodes = int(dataset_config.get("num_nodes_per_graph", 20))
+    variant = str(dataset_config.get("variant", "cycle_matching_v4"))
+    if num_nodes < 8 or num_nodes % 2 != 0:
+        raise ValueError("normal-tree-backedge requires an even node count >= 8")
+
+    graphs = []
+    generator = torch.Generator().manual_seed(int(dataset_config.get("generation_seed", 45678)))
+    for graph_idx in range(num_graphs):
+        label = graph_idx % 2
+        graphs.append(_normal_tree_backedge_graph(num_nodes, label, graph_idx, variant, generator))
+    permutation = torch.randperm(num_graphs, generator=generator).tolist()
+    graphs = [graphs[idx] for idx in permutation]
+    train_end = int(0.6 * num_graphs)
+    val_end = int(0.8 * num_graphs)
+    split_idx = {
+        "train": torch.arange(0, train_end),
+        "valid": torch.arange(train_end, val_end),
+        "test": torch.arange(val_end, num_graphs),
+    }
+    return DatasetBundle(
+        name="normal-tree-backedge",
+        task="graph_binary_classification",
+        metric="average_precision",
+        trainer="graph_prediction",
+        evaluator="average_precision",
+        dataset=graphs,
+        split_idx=split_idx,
+        num_features=int(graphs[0].num_features),
+        num_outputs=1,
+    )
+
+
+def _normal_tree_backedge_graph(
+    num_nodes: int,
+    label: int,
+    graph_idx: int,
+    variant: str,
+    generator: torch.Generator,
+) -> Data:
+    if variant == "endpoint_pairing_v2":
+        return _endpoint_pairing_backedge_graph(num_nodes, label, graph_idx)
+    if variant not in {"cycle_matching_v3", "cycle_matching_v4"}:
+        raise ValueError(f"Unsupported normal-tree-backedge variant: {variant}")
+    undirected_edges = {(idx, (idx + 1) % num_nodes) for idx in range(num_nodes)}
+    matching = _sample_cycle_matching(num_nodes, label, generator)
+    for src, dst in matching:
+        pair = (src, dst) if src < dst else (dst, src)
+        undirected_edges.add(pair)
+    relabel = torch.randperm(num_nodes, generator=generator)
+    relabeled_edges = {
+        _ordered_pair(int(relabel[src]), int(relabel[dst])) for src, dst in undirected_edges
+    }
+    edge_index = _directed_edge_index(relabeled_edges)
+    x = torch.ones((num_nodes, 1), dtype=torch.float)
+    y = torch.tensor([[float(label)]])
+    return Data(x=x, edge_index=edge_index, y=y, graph_idx=graph_idx)
+
+
+def _endpoint_pairing_backedge_graph(num_nodes: int, label: int, graph_idx: int) -> Data:
+    undirected_edges = {(idx, idx + 1) for idx in range(num_nodes - 1)}
+    if label == 0:
+        chords = [(0, 2), (4, 7), (num_nodes - 3, num_nodes - 1)]
+    else:
+        chords = [(0, 7), (2, num_nodes - 3), (4, num_nodes - 1)]
+    for src, dst in chords:
+        pair = (src, dst) if src < dst else (dst, src)
+        undirected_edges.add(pair)
+    chord_endpoint = torch.zeros(num_nodes)
+    degree = torch.zeros(num_nodes)
+    for src, dst in undirected_edges:
+        degree[src] += 1.0
+        degree[dst] += 1.0
+    for src, dst in chords:
+        chord_endpoint[src] = 1.0
+        chord_endpoint[dst] = 1.0
+    x = torch.stack(
+        [
+            torch.ones(num_nodes),
+            chord_endpoint,
+            degree / degree.max().clamp_min(1.0),
+        ],
+        dim=1,
+    )
+    sources = []
+    targets = []
+    for src, dst in sorted(undirected_edges):
+        sources.extend([src, dst])
+        targets.extend([dst, src])
+    edge_index = torch.tensor([sources, targets], dtype=torch.long)
+    y = torch.tensor([[float(label)]])
+    return Data(x=x, edge_index=edge_index, y=y, graph_idx=graph_idx)
+
+
+def _sample_cycle_matching(
+    num_nodes: int,
+    label: int,
+    generator: torch.Generator,
+) -> list[tuple[int, int]]:
+    max_crossings = (num_nodes // 2) * ((num_nodes // 2) - 1) / 2
+    low_max = int(0.40 * max_crossings)
+    high_min = int(0.60 * max_crossings)
+    for _ in range(10_000):
+        matching = _random_nonlocal_matching(num_nodes, generator)
+        crossings = _count_matching_crossings(matching)
+        if label == 0 and crossings <= low_max:
+            return matching
+        if label == 1 and crossings >= high_min:
+            return matching
+    raise RuntimeError("Failed to sample a normal-tree-backedge matching")
+
+
+def _random_nonlocal_matching(
+    num_nodes: int,
+    generator: torch.Generator,
+) -> list[tuple[int, int]]:
+    for _ in range(1_000):
+        remaining = list(range(num_nodes))
+        matching: list[tuple[int, int]] = []
+        while remaining:
+            src = remaining.pop(0)
+            candidates = [
+                dst
+                for dst in remaining
+                if min((dst - src) % num_nodes, (src - dst) % num_nodes) >= 3
+            ]
+            if not candidates:
+                break
+            candidate_idx = int(torch.randint(len(candidates), (1,), generator=generator).item())
+            dst = candidates[candidate_idx]
+            remaining.remove(dst)
+            matching.append(_ordered_pair(src, dst))
+        if len(matching) == num_nodes // 2:
+            return matching
+    raise RuntimeError("Failed to sample a nonlocal perfect matching")
+
+
+def _count_matching_crossings(matching: list[tuple[int, int]]) -> int:
+    crossings = 0
+    arcs = [tuple(sorted(pair)) for pair in matching]
+    for idx, (a, b) in enumerate(arcs):
+        for c, d in arcs[idx + 1 :]:
+            if (a < c < b < d) or (c < a < d < b):
+                crossings += 1
+    return crossings
+
+
+def _ordered_pair(src: int, dst: int) -> tuple[int, int]:
+    return (src, dst) if src < dst else (dst, src)
+
+
+def _directed_edge_index(undirected_edges: set[tuple[int, int]]) -> torch.Tensor:
+    sources = []
+    targets = []
+    for src, dst in sorted(undirected_edges):
+        sources.extend([src, dst])
+        targets.extend([dst, src])
+    return torch.tensor([sources, targets], dtype=torch.long)
+
+
 @register_dataset("toy-link")
 def load_toy_link_dataset(config: dict[str, Any] | None = None) -> DatasetBundle:
     dataset_config = _dataset_config(config)

@@ -1,0 +1,14 @@
+model:
+  name: tree_pack_gnn
+  hidden_channels: 64
+  num_layers: 3
+  num_trees: 4
+  tree_start_idx: 0
+  tree_pooling: gated
+  use_graph_channel: true
+  use_tree_channel: true
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm
+  pooling: mean_max_add
+  head_hidden_channels: 64

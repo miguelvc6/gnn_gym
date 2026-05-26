@@ -1,0 +1,11 @@
+{
+  "class_prevalence_random_ap": 0.4166666567325592,
+  "max_prediction_range": 0.7054532170295715,
+  "mean_prediction_variance": 0.056554537266492844,
+  "num_graphs": 24,
+  "num_relabels": 16,
+  "original_ap": 0.5384209652240342,
+  "relabeled_ap_mean": 0.5556884407997131,
+  "relabeled_ap_std": 0.07971803843975067,
+  "run_dir": "results/runs/2026-05-26_12-26-23__normal_tree_backedge_gnn__normal-tree-backedge__seed-0__8682a21a"
+}

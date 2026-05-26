@@ -1,0 +1,13 @@
+model:
+  name: sep_bottleneck_gnn
+  hidden_channels: 64
+  num_layers: 1
+  propagation_steps: 10
+  alpha: 0.1
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm
+  gate_hidden_channels: 32
+  separator_residual_init: 0.001
+  separator_token_init: 0.001
+  separator_max_scale: 0.1

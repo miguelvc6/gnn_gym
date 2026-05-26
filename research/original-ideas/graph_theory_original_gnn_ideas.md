@@ -110,6 +110,14 @@ Low to medium. Biconnected components and bridges are cheap. Approximate local c
 
 Do not rewrite trainers. Implement precomputed graph structural features in dataset transform or inside the model with cached preprocessing.
 
+## Status
+
+2026-05-26: First bounded `SepBottleneckGNN-lite` implementation completed. Cora seed-0 did not
+justify confirmation. PubMed seed-0 was promising, but the confirmed config
+`architecture_config_hash=0f352f9d` reached validation `0.8000 +/- 0.0053`, slightly below confirmed
+`gpr_gnn` PubMed validation `0.8007`. Next useful step is a synthetic separator-bottleneck
+diagnostic before additional citation-network variants.
+
 ---
 
 # Idea 2: CycleCutGNN — Cycle/Cut Dual Message Passing
@@ -509,6 +517,28 @@ Low. DFS trees and edge tags are cheap.
 ## Implementation boundary
 
 Keep the first model invariant enough: aggregate over several rooted DFS trees or use deterministic root rules.
+
+## Status
+
+2026-05-26: First bounded `NormalTreeBackedgeGNN-lite` implementation completed with deterministic
+DFS tree/back-edge channels and a small synthetic `normal-tree-backedge` diagnostic. The diagnostic
+was not discriminative: final seed-0 runs gave AP `1.0000` for both `gin`
+(`architecture_config_hash=bb49e9d0`) and `normal_tree_backedge_gnn`
+(`architecture_config_hash=83e3c616`). Do not use this diagnostic as architecture evidence without
+hardening it.
+
+2026-05-26: Hardened diagnostic `cycle_matching_v4` added. Graphs are 20-node 3-regular
+cycle-plus-matching graphs with constant features and random relabeling. Shortcut graph-stat
+baselines did not solve it. Across seeds `[0,1,2]`, GIN and GCN stayed at val/test AP `0.4167`,
+while `normal_tree_backedge_gnn` (`architecture_config_hash=f9449a35`) reached validation AP
+`0.6635 +/- 0.0788` and test AP `0.5516 +/- 0.0865`. This supports the mechanism on a synthetic
+diagnostic but shows weak held-out generalization; next step is multi-root/multi-order DFS averaging.
+
+2026-05-26: Naive four-order DFS averaging was implemented with `model.num_tree_orders=4`, but did
+not improve the diagnostic. The four-order config `architecture_config_hash=2fb8a3d0` reached
+validation AP `0.6490 +/- 0.0864` and test AP `0.5626 +/- 0.2606`, with about 5x runtime versus the
+single-order config. Keep the implementation for future experiments, but prefer a learned order
+gate or a different idea-bank direction over unweighted averaging.
 
 ---
 

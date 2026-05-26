@@ -1,0 +1,7 @@
+ablation,architecture_config_hash,seeds,val_ap_mean,val_ap_std,test_ap_mean,test_ap_std,runtime_s_mean,runtime_s_std
+true roles,287c0583,3,0.7292,0.1321,0.5198,0.0428,15.3489,7.8729
+collapsed,cb56a709,3,0.6549,0.0757,0.3491,0.0418,11.731,3.1819
+tree-only,f2337adb,3,0.6517,0.1046,0.4856,0.0802,9.0542,2.8483
+back-only,50346584,3,0.6155,0.06,0.5535,0.0128,9.5682,4.1663
+shuffled,b6f56cd7,3,0.6395,0.0608,0.4033,0.1064,8.1973,0.9892
+random DFS order,21ead346,3,0.5702,0.0081,0.4782,0.032,12.0216,1.0228

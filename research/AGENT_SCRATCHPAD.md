@@ -63,6 +63,387 @@ Next:
 
 ## Tried
 
+## 2026-05-26 - TreePackGNN-lite Diagnostic Cycle
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/models/tree_pack_gnn.py`, `configs/models/tree_pack_gnn.yaml`,
+`tests/test_tree_pack_gnn.py`, `tests/test_model_shapes.py`, `tests/test_registry.py`,
+`research/experiments/tree_pack_gnn.md`, `research/AGENT_SCRATCHPAD.md`,
+`research/INSIGHTS.md`, aggregate tables and TreePack audit JSON files under `results/tables/`
+Command:
+
+```bash
+uv run gnngym train --model tree_pack_gnn --dataset toy-graph --seed 0 --override training.max_epochs=2 --override training.patience=2 --override model.hidden_channels=16 --override model.head_hidden_channels=16 --override model.num_trees=4 --override trainer.batch_size=8
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override model.num_layers=3 --override model.num_trees=4 --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed {0,1,2} --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=64 --override model.head_hidden_channels=64 --override model.num_layers=3 --override model.num_trees=4 --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16
+UV_CACHE_DIR=/tmp/uv-cache uv run python research/experiments/normal_tree_backedge_permutation_audit.py --run-dir <tree_pack_run> --num-relabels 16 --seed 123 --batch-size 16 --output results/tables/tree_pack_gnn_permutation_audit_seed*_wide.json
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+```
+
+Result:
+
+- Toy-graph crash check passed.
+- TreePack hidden-32 seed-0 screen was not promising: val/test AP `0.5856/0.5479`.
+- TreePack hidden-64 seed-0 screen was promising: val/test AP `0.7305/0.6629`.
+- Confirmed hidden-64 config `architecture_config_hash=8ec4a7ff` across seeds `[0,1,2]`:
+  validation AP `0.7462 +/- 0.0914`, test AP `0.5838 +/- 0.0815`.
+- This beats single-order NormalTreeBackedgeGNN (`0.6635/0.5516`) and naive four-order DFS
+  averaging (`0.6490/0.5626`) by mean validation/test AP.
+- Permutation audit max prediction ranges were `0.0002`, `0.0013`, and `0.0027`, much lower than
+  single-order NormalTreeBackedgeGNN ranges up to about `0.71`.
+
+Keep/discard: keep as positive synthetic diagnostic evidence, not a real benchmark claim.
+
+Notes:
+
+- TreePack appears to fix the relabeling instability that made the single DFS witness unsuitable.
+- The seed-2 held-out test AP was only `0.5001`, so generalization is still fragile.
+- Runtime is higher than single-order NormalTreeBackedgeGNN (`31.12s` mean versus `14.34s`) but
+  lower than the old four-order DFS average (`75.73s`).
+
+Next:
+
+- Continue TreePack for one bounded ablation cycle before moving to `CycleCutGNN-lite`.
+- Run residual-only/full-graph, individual tree-view, mean-pooling-vs-gating, and view-use
+  diagnostics. Stop if the residual or one tree type explains the gain.
+
+## 2026-05-26 - TreePackGNN-lite Ablation Cycle
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/models/tree_pack_gnn.py`, `configs/models/tree_pack_gnn.yaml`,
+`tests/test_tree_pack_gnn.py`, `tests/test_model_shapes.py`,
+`research/experiments/tree_pack_gate_diagnostics.py`, `research/experiments/tree_pack_gnn.md`,
+`research/AGENT_SCRATCHPAD.md`, `research/INSIGHTS.md`, aggregate tables and diagnostic JSON files
+under `results/tables/`
+Command:
+
+```bash
+uv run pytest tests/test_tree_pack_gnn.py tests/test_model_shapes.py::test_model_output_shape
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=64 --override model.head_hidden_channels=64 --override model.num_layers=3 --override model.num_trees=4 --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16 --override model.use_tree_channel=false
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=64 --override model.head_hidden_channels=64 --override model.num_layers=3 --override model.num_trees=4 --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16 --override model.use_graph_channel=false
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=64 --override model.head_hidden_channels=64 --override model.num_layers=3 --override model.num_trees=4 --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16 --override model.tree_pooling=mean
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=64 --override model.head_hidden_channels=64 --override model.num_layers=3 --override model.num_trees=1 --override model.tree_start_idx={0,1,2,3} --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16
+uv run gnngym train --model tree_pack_gnn --dataset normal-tree-backedge --seed {1,2} --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=64 --override model.head_hidden_channels=64 --override model.num_layers=3 --override model.num_trees=1 --override model.tree_start_idx={0,3} --override model.dropout=0.2 --override model.pooling=mean_max_add --override trainer.batch_size=16
+UV_CACHE_DIR=/tmp/uv-cache uv run python research/experiments/tree_pack_gate_diagnostics.py --run-dir <tree_pack_run> --split test --output results/tables/tree_pack_gnn_gate_diagnostics_seed*.json
+UV_CACHE_DIR=/tmp/uv-cache uv run python research/experiments/normal_tree_backedge_permutation_audit.py --run-dir <single_tree0_run> --num-relabels 16 --seed 123 --batch-size 16 --output results/tables/tree_pack_gnn_single_tree0_permutation_audit_seed*.json
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+```
+
+Result:
+
+- Residual-only/full-graph control collapsed to chance on seed 0: val/test AP `0.4167/0.4167`.
+- Tree-only 4-tree gated pack retained signal but underperformed the full pack on seed 0:
+  val/test AP `0.6339/0.5992`.
+- Four-tree mean pooling was worse than the learned gate on seed-0 validation and poor on held-out
+  test: val/test AP `0.7089/0.4259`.
+- Single-tree seed-0 controls found that high-degree BFS (`tree_start_idx=0`) reached
+  val/test AP `0.7540/0.6795`, deterministic DFS reached `0.7142/0.6171`, farthest/low-degree BFS
+  reached `0.5218/0.5285`, and low-overlap/low-degree BFS reached `0.7947/0.6364`.
+- Confirmed high-degree BFS single-tree control `architecture_config_hash=098eb1ec` across seeds
+  `[0,1,2]`: validation AP `0.7493 +/- 0.0113`, test AP `0.6812 +/- 0.0185`, mean train time
+  `16.21s`.
+- Confirmed low-overlap/low-degree BFS single-tree control `architecture_config_hash=fe4388ea`
+  across seeds `[0,1,2]`: validation AP `0.7176 +/- 0.0881`, test AP `0.6989 +/- 0.0632`, mean
+  train time `14.50s`.
+- Full 4-tree gated pack `architecture_config_hash=8ec4a7ff` remains at validation AP
+  `0.7462 +/- 0.0914`, test AP `0.5838 +/- 0.0815`, mean train time `31.12s`.
+- Gate diagnostics were mostly near-uniform; layer-2 gate entropy was `1.3179`, `1.3863`, and
+  `1.2175` for seeds `0`, `1`, and `2` versus maximum four-view entropy `1.3863`.
+- High-degree BFS single-tree relabeling max prediction ranges were `0.0113`, `0.0068`, and
+  `0.0141`: much better than old single-order NormalTreeBackedgeGNN, but less stable than the
+  full TreePack max range of `0.0027`.
+
+Keep/discard: discard the current learned tree-pack/gating claim as not supported by ablations.
+Keep the high-degree BFS single-tree result as a strong synthetic control.
+
+Notes:
+
+- The ordinary graph residual is not carrying the result.
+- The current learned gate does not clearly select views; it often behaves close to mean pooling.
+- A single deterministic BFS witness explains or exceeds the full pack on confirmed validation/test
+  while being faster and lower variance.
+
+Next:
+
+- Move to `CycleCutGNN-lite`.
+- Revisit TreePack only with a genuinely new mechanism for canonicalizing or sharply selecting tree
+  views; do not keep adding more unweighted or weakly gated tree witnesses.
+
+## 2026-05-26 - NormalTreeBackedgeGNN Edge-Role And Relabeling Audit
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/models/normal_tree_backedge_gnn.py`,
+`configs/models/normal_tree_backedge_gnn.yaml`, `tests/test_normal_tree_backedge_gnn.py`,
+`research/experiments/normal_tree_backedge_permutation_audit.py`,
+`research/experiments/normal_tree_backedge_gnn.md`, `research/AGENT_SCRATCHPAD.md`,
+`research/INSIGHTS.md`, and aggregate/diagnostic tables under `results/tables/`
+Command:
+
+```bash
+uv run pytest tests/test_normal_tree_backedge_gnn.py tests/test_model_shapes.py -q
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed {0,1,2} --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override model.num_tree_orders=1 --override model.edge_role_mode={true,collapsed,tree_only,back_only,shuffled} --override model.dfs_order_mode=deterministic --override trainer.batch_size=16
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed {0,1,2} --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override model.num_tree_orders=1 --override model.edge_role_mode=true --override model.dfs_order_mode=random --override trainer.batch_size=16
+uv run python research/experiments/normal_tree_backedge_permutation_audit.py --run-dir <true-role-run> --num-relabels 16 --seed 123 --batch-size 16
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+uv run ruff check .
+```
+
+Result:
+
+- `cycle_matching_v4` prevalence is `0.4167` on validation and test, so random AP is about
+  `0.4167`.
+- True edge roles: val AP `0.7292 +/- 0.1321`, test AP `0.5198 +/- 0.0428`.
+- Collapsed roles: val AP `0.6549 +/- 0.0757`, test AP `0.3491 +/- 0.0418`.
+- Tree-only: val AP `0.6517 +/- 0.1046`, test AP `0.4856 +/- 0.0802`.
+- Back-only: val AP `0.6155 +/- 0.0600`, test AP `0.5535 +/- 0.0128`.
+- Shuffled roles: val AP `0.6395 +/- 0.0608`, test AP `0.4033 +/- 0.1064`.
+- Random DFS order: val AP `0.5702 +/- 0.0081`, test AP `0.4782 +/- 0.0320`.
+- Permutation audit over 16 random relabelings of the same test graphs gave relabeled AP means
+  `0.5557`, `0.4504`, and `0.5791` for seeds `0`, `1`, and `2`; mean prediction variance across
+  seeds was `0.0255`, with max per-graph prediction ranges up to about `0.71`.
+
+Keep/discard:
+
+- Keep the result as mechanism-specific synthetic support on validation: true edge roles beat both
+  collapsed and shuffled controls.
+- Do not keep the current model as benchmark-ready evidence. Prediction stability under relabeling
+  is poor, and depth/span normalization is currently batch-composition sensitive.
+
+Notes:
+
+- The mechanism signal is real enough to distinguish true roles from controls, but it is not a
+  graph invariant in the current implementation.
+- The random-order control underperformed true deterministic roles, so arbitrary DFS choice is part
+  of the learned signal rather than a harmless implementation detail.
+- A same-checkpoint audit initially changed AP when batch size changed; this exposed that marker
+  depth normalization uses the maximum depth of the batched disconnected union instead of per graph.
+
+Next:
+
+- Stop refining single-order NormalTreeBackedgeGNN for broader claims.
+- If this idea is revisited, first fix per-graph normalization and use a canonical or learned
+  distribution over DFS/normal trees.
+- For the next idea-bank cycle, move to `TreePackGNN`; use `CycleCutGNN-lite` after that if
+  TreePack is infeasible or also weak.
+
+## 2026-05-26 - NormalTreeBackedgeGNN Multi-Order DFS Averaging
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/models/normal_tree_backedge_gnn.py`,
+`configs/models/normal_tree_backedge_gnn.yaml`, `tests/test_model_shapes.py`,
+`tests/test_normal_tree_backedge_gnn.py`, `research/experiments/normal_tree_backedge_gnn.md`,
+`research/AGENT_SCRATCHPAD.md`, `research/INSIGHTS.md`, aggregate tables under `results/tables/`
+Command:
+
+```bash
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override model.num_tree_orders=4 --override trainer.batch_size=16
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 1 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override model.num_tree_orders=4 --override trainer.batch_size=16
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 2 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override model.num_tree_orders=4 --override trainer.batch_size=16
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+uv run ruff check .
+uv run pytest
+```
+
+Result:
+
+- Added `model.num_tree_orders` support to `NormalTreeBackedgeGNN-lite`.
+- The model can now compute several deterministic DFS forests with different root/neighbor orders
+  and average shared up/down/back-edge message channels.
+- On `cycle_matching_v4`, the 4-order variant (`architecture_config_hash=2fb8a3d0`) reached
+  validation AP `0.6490 +/- 0.0864` and test AP `0.5626 +/- 0.2606`.
+- The previous single-order variant (`architecture_config_hash=f9449a35`) remains better on mean
+  validation AP: `0.6635 +/- 0.0788`, with lower test variance `0.5516 +/- 0.0865`.
+- Runtime increased from about `14.34s` mean to `75.73s` mean.
+- `uv run ruff check .` passed.
+- `uv run pytest` passed: `55 passed, 2 skipped`.
+
+Keep/discard: keep the parameterized implementation, but keep the default YAML at
+`num_tree_orders=1`; discard naive four-order averaging as a robustness fix.
+
+Notes:
+
+- Seed 2 had high test AP for the four-order model, but the seed-0/seed-1 test AP values were poor,
+  so this is not a stable improvement.
+- Naive averaging likely washes out useful traversal-specific span information.
+
+Next:
+
+- Do not keep expanding this line with unweighted order averaging.
+- If revisiting NormalTreeBackedgeGNN, try learned order gating or explicit cycle/matching features.
+- Otherwise move to `TreePackGNN` or the next idea-bank candidate.
+
+## 2026-05-26 - NormalTreeBackedgeGNN Hardened Diagnostic
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/data/catalog.py`,
+`configs/datasets/normal_tree_backedge.yaml`,
+`tests/test_normal_tree_backedge_gnn.py`,
+`research/experiments/normal_tree_backedge_shortcut_check.py`,
+`research/experiments/normal_tree_backedge_gnn.md`,
+`research/AGENT_SCRATCHPAD.md`, `research/INSIGHTS.md`, aggregate tables under `results/tables/`
+Command:
+
+```bash
+uv run python research/experiments/normal_tree_backedge_shortcut_check.py
+uv run gnngym train --model gin --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.num_layers=3 --override model.dropout=0.2 --override model.pooling=mean_max_add --override model.head_hidden_channels=32 --override trainer.batch_size=16
+uv run gnngym train --model gcn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.num_layers=3 --override model.dropout=0.2 --override model.pooling=mean_max_add --override model.head_hidden_channels=32 --override trainer.batch_size=16
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=cycle_matching_v4 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override trainer.batch_size=16
+uv run gnngym train --model gin --dataset normal-tree-backedge --seed 1 --override dataset.variant=cycle_matching_v4 ...
+uv run gnngym train --model gin --dataset normal-tree-backedge --seed 2 --override dataset.variant=cycle_matching_v4 ...
+uv run gnngym train --model gcn --dataset normal-tree-backedge --seed 1 --override dataset.variant=cycle_matching_v4 ...
+uv run gnngym train --model gcn --dataset normal-tree-backedge --seed 2 --override dataset.variant=cycle_matching_v4 ...
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 1 --override dataset.variant=cycle_matching_v4 ...
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 2 --override dataset.variant=cycle_matching_v4 ...
+uv run ruff check .
+uv run pytest
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+```
+
+Result:
+
+- Hardened `normal-tree-backedge` with `cycle_matching_v4`: 20-node 3-regular graphs built from a
+  cycle plus a nonlocal perfect matching, constant node features, random relabeling per graph, and
+  labels from low- versus high-crossing chord arrangement.
+- Shortcut graph-stat baselines did not solve it:
+  - logistic graph stats: val AP `0.5777`, test AP `0.5191`
+  - MLP graph stats: val AP `0.6419`, test AP `0.5192`
+- Confirmed the diagnostic screen across seeds `[0,1,2]`:
+  - `gin`, `architecture_config_hash=42244e3d`: val/test AP `0.4167 +/- 0.0000`
+  - `gcn`, `architecture_config_hash=f594dd4a`: val/test AP `0.4167 +/- 0.0000`
+  - `normal_tree_backedge_gnn`, `architecture_config_hash=f9449a35`: val AP
+    `0.6635 +/- 0.0788`, test AP `0.5516 +/- 0.0865`
+- `uv run ruff check .` passed.
+- `uv run pytest` passed: `54 passed, 2 skipped`.
+
+Keep/discard: keep as a useful synthetic diagnostic and a mechanism-supporting result; do not claim
+general benchmark improvement.
+
+Notes:
+
+- The validation advantage suggests DFS tree/back-edge channels expose signal that constant-feature
+  GIN/GCN cannot access on matched 3-regular graphs.
+- The held-out test mean is weak and variable, so the current deterministic DFS scaffold may be
+  overfitting traversal artifacts from arbitrary random node labels.
+
+Next:
+
+- Try a multi-root or multi-order NormalTreeBackedgeGNN that averages several DFS/normal-tree
+  decompositions on `cycle_matching_v4`.
+- Only after improving held-out diagnostic AP should this idea move to real graph benchmarks.
+
+## 2026-05-26 - NormalTreeBackedgeGNN-lite And First Back-Edge Diagnostic
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/models/normal_tree_backedge_gnn.py`,
+`configs/models/normal_tree_backedge_gnn.yaml`, `src/gnn_gym/data/catalog.py`,
+`configs/datasets/normal_tree_backedge.yaml`, `tests/test_model_shapes.py`,
+`tests/test_registry.py`, `tests/test_normal_tree_backedge_gnn.py`,
+`research/experiments/normal_tree_backedge_gnn.md`, aggregate tables under `results/tables/`
+Command:
+
+```bash
+uv run gnngym train --model normal_tree_backedge_gnn --dataset toy-graph --seed 0 --override training.max_epochs=2 --override training.patience=2 --override model.hidden_channels=16 --override model.head_hidden_channels=16 --override trainer.batch_size=8
+uv run gnngym train --model gin --dataset normal-tree-backedge --seed 0 --override dataset.variant=endpoint_pairing_v2 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.num_layers=3 --override model.dropout=0.2 --override model.pooling=mean_max_add --override model.head_hidden_channels=32 --override trainer.batch_size=16
+uv run gnngym train --model normal_tree_backedge_gnn --dataset normal-tree-backedge --seed 0 --override dataset.variant=endpoint_pairing_v2 --override training.max_epochs=50 --override training.patience=15 --override model.hidden_channels=32 --override model.head_hidden_channels=32 --override trainer.batch_size=16
+uv run ruff check .
+uv run pytest
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+```
+
+Result:
+
+- Implemented `NormalTreeBackedgeGNN-lite` from the graph-theory idea bank.
+- Added `normal-tree-backedge`, a small synthetic graph diagnostic with path backbones and
+  short-span versus long-span chord/back-edge pairings.
+- Toy-graph crash check passed.
+- On the final diagnostic variant, `gin` reached seed-0 validation/test AP `1.0000/1.0000`
+  (`architecture_config_hash=bb49e9d0`).
+- `normal_tree_backedge_gnn` also reached seed-0 validation/test AP `1.0000/1.0000`
+  (`architecture_config_hash=83e3c616`), with more parameters and longer runtime.
+- Because the primary baseline solved the diagnostic, no confirmation was run.
+- `uv run ruff check .` passed.
+- `uv run pytest` passed: `53 passed, 2 skipped`.
+
+Keep/discard: keep implementation and diagnostic as infrastructure, but do not use this diagnostic
+as evidence for the architecture.
+
+Notes:
+
+- The first diagnostic attempt also saturated. The final `dataset.variant=endpoint_pairing_v2` runs
+  were added to avoid grouping stale code-generation rows under the same config hash.
+- The current diagnostic is too easy for GIN despite matched chord endpoints. It still leaks local
+  structure through features and small graph size.
+
+Next:
+
+- Either harden the synthetic task with stronger local-neighborhood matching and no endpoint marker,
+  or move to `TreePackGNN` for a Cora/PubMed-compatible next idea.
+- Do not spend MolHIV or larger graph benchmark time on `NormalTreeBackedgeGNN-lite` until the
+  diagnostic distinguishes it from GIN.
+
+## 2026-05-26 - SepBottleneckGNN-lite First Graph-Theory Idea-Bank Run
+
+Branch/commit: local uncommitted work on HEAD `a25be44c5e94c63860b057461dcafd4b4e529eee`
+Files changed: `src/gnn_gym/models/sep_bottleneck_gnn.py`,
+`configs/models/sep_bottleneck_gnn.yaml`, `tests/test_model_shapes.py`,
+`tests/test_registry.py`, `tests/test_sep_bottleneck_gnn.py`,
+`research/experiments/sep_bottleneck_gnn.md`, aggregate tables under `results/tables/`
+Command:
+
+```bash
+uv run gnngym train --model sep_bottleneck_gnn --dataset toy-node --seed 0 --override training.max_epochs=2 --override training.patience=2
+uv run gnngym train --model sep_bottleneck_gnn --dataset cora --seed 0 --override training.max_epochs=50 --override training.patience=15
+uv run gnngym train --model sep_bottleneck_gnn --dataset pubmed --seed 0 --override training.max_epochs=50 --override training.patience=15
+uv run gnngym train --model sep_bottleneck_gnn --dataset pubmed --seed 0 --override training.max_epochs=200 --override training.patience=50
+uv run gnngym train --model sep_bottleneck_gnn --dataset pubmed --seed 1 --override training.max_epochs=200 --override training.patience=50
+uv run gnngym train --model sep_bottleneck_gnn --dataset pubmed --seed 2 --override training.max_epochs=200 --override training.patience=50
+uv run gnngym aggregate --runs results/runs --out results/tables/research_all_runs.csv
+uv run gnngym export-tables --input results/tables/research_all_runs.csv --out-dir results/tables
+uv run ruff check .
+uv run pytest
+```
+
+Result:
+
+- Implemented `SepBottleneckGNN-lite` from
+  `research/original-ideas/graph_theory_original_gnn_ideas.md`.
+- Toy-node crash check passed.
+- Cora seed-0 fast screen reached validation `0.7580`, below confirmed GPR Cora mean `0.7827`;
+  did not confirm.
+- PubMed seed-0 fast screen reached validation `0.8080`, so it was confirmed.
+- PubMed confirmation for `architecture_config_hash=0f352f9d` across seeds `[0,1,2]` reached
+  validation `0.8000 +/- 0.0053` and test `0.7763 +/- 0.0117`, slightly below confirmed GPR
+  PubMed validation mean `0.8007`.
+- `uv run ruff check .` passed.
+- `uv run pytest` passed: `50 passed, 2 skipped`.
+
+Keep/discard: keep code and notes as a bounded negative/near-miss experiment; do not claim
+improvement over GPR.
+
+Notes:
+
+- The initial two-layer/dropout-0.5 default was too brittle under patience 15 because validation
+  could plateau just long enough to early-stop before late recovery. The final default uses the
+  stronger one-layer decoupled propagation family.
+- The separator channel restores RNG state after separator-only module initialization, preserving
+  the base fallback initialization for seed-controlled comparisons.
+- The cheap separator score may be too broad on citation graphs because every articulation-incident
+  edge is treated as separator-adjacent.
+
+Next:
+
+- Add a small `separator-bottleneck-node` diagnostic before more citation-network Sep variants.
+- If the diagnostic is positive, refine the separator score to distinguish true bridge/cross-block
+  edges from ordinary articulation-incident edges.
+- If the diagnostic is negative, discard this separator-residual mechanism and move to the next idea
+  bank candidate.
+
 ## 2026-05-22 - Node Baseline Hyperparameter Search Plan
 
 Branch/commit: local worktree, current HEAD `46f3954891a4714fd29028c43b70d24bddd37580`

@@ -2,6 +2,29 @@
 \toprule
 task & dataset & model & metric_name & architecture_config_hash & seeds & val_mean & val_std & test_mean & test_std & train_time_seconds_mean & num_parameters_mean \\
 \midrule
+graph_binary_classification & normal-tree-backedge & gcn & average_precision & f594dd4a & 3 & 0.416667 & 0.000000 & 0.416667 & 0.000000 & 3.217837 & 5505.000000 \\
+graph_binary_classification & normal-tree-backedge & gin & average_precision & 42244e3d & 3 & 0.416667 & 0.000000 & 0.416667 & 0.000000 & 2.995612 & 8676.000000 \\
+graph_binary_classification & normal-tree-backedge & gin & average_precision & 51f1bea4 & 2 & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 2.509453 & 8740.000000 \\
+graph_binary_classification & normal-tree-backedge & gin & average_precision & bb49e9d0 & 1 & 1.000000 & NaN & 1.000000 & NaN & 2.856096 & 8740.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & 21ead346 & 3 & 0.570198 & 0.008066 & 0.478214 & 0.032015 & 12.021627 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & 287c0583 & 3 & 0.729230 & 0.132057 & 0.519774 & 0.042762 & 15.348908 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & 2fb8a3d0 & 3 & 0.648953 & 0.086446 & 0.562582 & 0.260561 & 75.730743 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & 50346584 & 3 & 0.615451 & 0.059954 & 0.553487 & 0.012849 & 9.568198 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & 83e3c616 & 1 & 1.000000 & NaN & 1.000000 & NaN & 5.397924 & 35713.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & b6f56cd7 & 3 & 0.639477 & 0.060846 & 0.403325 & 0.106430 & 8.197338 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & cb56a709 & 3 & 0.654906 & 0.075726 & 0.349074 & 0.041831 & 11.731015 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & ce919d3a & 2 & 1.000000 & 0.000000 & 1.000000 & 0.000000 & 6.914102 & 35713.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & f2337adb & 3 & 0.651722 & 0.104583 & 0.485593 & 0.080169 & 9.054190 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & normal_tree_backedge_gnn & average_precision & f9449a35 & 3 & 0.663486 & 0.078828 & 0.551625 & 0.086527 & 14.335256 & 35649.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 098eb1ec & 3 & 0.749320 & 0.011328 & 0.681209 & 0.018475 & 16.214892 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 119b05b0 & 1 & 0.714158 & NaN & 0.617094 & NaN & 17.355956 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 250900ee & 1 & 0.633935 & NaN & 0.599185 & NaN & 23.420671 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 7682e0ad & 1 & 0.521785 & NaN & 0.528550 & NaN & 16.508848 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 8183ffd8 & 1 & 0.585586 & NaN & 0.547860 & NaN & 21.049619 & 22596.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & 8ec4a7ff & 3 & 0.746234 & 0.091364 & 0.583790 & 0.081539 & 31.121768 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & cc125dc6 & 1 & 0.708900 & NaN & 0.425892 & NaN & 33.680022 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & e8832f31 & 1 & 0.416667 & NaN & 0.416667 & NaN & 2.836230 & 88196.000000 \\
+graph_binary_classification & normal-tree-backedge & tree_pack_gnn & average_precision & fe4388ea & 3 & 0.717556 & 0.088125 & 0.698941 & 0.063237 & 14.498034 & 88196.000000 \\
 graph_binary_classification & ogbg-molhiv & gat & rocauc & 40f3045d & 3 & 0.737954 & 0.003584 & 0.690910 & 0.001210 & 115.429836 & 18945.000000 \\
 graph_binary_classification & ogbg-molhiv & gcn & rocauc & 90b462de & 3 & 0.754262 & 0.011362 & 0.679831 & 0.010170 & 124.004140 & 5121.000000 \\
 graph_binary_classification & ogbg-molhiv & gin & rocauc & 768d4306 & 1 & 0.716322 & NaN & 0.687976 & NaN & 49.208847 & 26052.000000 \\
@@ -10,6 +33,8 @@ graph_binary_classification & ogbg-molhiv & gin & rocauc & 7dfd2c79 & 1 & 0.7488
 graph_binary_classification & ogbg-molhiv & mlp & rocauc & 7748fbcc & 3 & 0.676415 & 0.010212 & 0.633297 & 0.012713 & 68.691395 & 5121.000000 \\
 graph_binary_classification & toy-graph & gin & average_precision & 0a4a0f2b & 1 & 1.000000 & NaN & 0.000000 & NaN & 0.890711 & 21700.000000 \\
 graph_binary_classification & toy-graph & gin & average_precision & 6a1300f4 & 1 & 1.000000 & NaN & 0.000000 & NaN & 0.773870 & 6659.000000 \\
+graph_binary_classification & toy-graph & normal_tree_backedge_gnn & average_precision & a584ac4b & 1 & 0.833333 & NaN & 0.000000 & NaN & 1.128250 & 9457.000000 \\
+graph_binary_classification & toy-graph & tree_pack_gnn & average_precision & d4b2cd20 & 1 & 0.750000 & NaN & 0.000000 & NaN & 1.467505 & 6004.000000 \\
 link_prediction & toy-link & gcn & hits@50 & c3ac49b8 & 1 & 1.000000 & NaN & 1.000000 & NaN & 0.616605 & 4992.000000 \\
 node_classification & cora & appnp_net & accuracy & 0045b6d4 & 1 & 0.472000 & NaN & 0.486000 & NaN & 0.528425 & 184711.000000 \\
 node_classification & cora & appnp_net & accuracy & 01f42f40 & 1 & 0.350000 & NaN & 0.382000 & NaN & 0.323136 & 201479.000000 \\
@@ -464,6 +489,7 @@ node_classification & cora & gpr_gnn & accuracy & 3bfa9876 & 1 & 0.072000 & NaN 
 node_classification & cora & gpr_gnn & accuracy & 3cc9e942 & 1 & 0.778000 & NaN & 0.765000 & NaN & 1.095813 & 184720.000000 \\
 node_classification & cora & gpr_gnn & accuracy & 3efc08a7 & 1 & 0.790000 & NaN & 0.784000 & NaN & 1.205569 & 184724.000000 \\
 node_classification & cora & gpr_gnn & accuracy & 3fc9cfb3 & 1 & 0.770000 & NaN & 0.775000 & NaN & 1.140285 & 184717.000000 \\
+node_classification & cora & gpr_gnn & accuracy & 40efc141 & 1 & 0.664000 & NaN & 0.688000 & NaN & 1.977570 & 96658.000000 \\
 node_classification & cora & gpr_gnn & accuracy & 43f7236f & 1 & 0.478000 & NaN & 0.496000 & NaN & 0.344321 & 184728.000000 \\
 node_classification & cora & gpr_gnn & accuracy & 44580cf5 & 1 & 0.784000 & NaN & 0.799000 & NaN & 1.216993 & 184724.000000 \\
 node_classification & cora & gpr_gnn & accuracy & 46829f96 & 1 & 0.766000 & NaN & 0.770000 & NaN & 1.406088 & 184728.000000 \\
@@ -761,6 +787,11 @@ node_classification & cora & rign_gnn & accuracy & d85b3a67 & 1 & 0.516000 & NaN
 node_classification & cora & rign_gnn & accuracy & eb3cd1b6 & 1 & 0.520000 & NaN & 0.524000 & NaN & 1.386926 & 350535.000000 \\
 node_classification & cora & rign_gnn & accuracy & f67888fd & 1 & 0.536000 & NaN & 0.506000 & NaN & 1.231240 & 848519.000000 \\
 node_classification & cora & rign_gnn & accuracy & fb9d262c & 1 & 0.558000 & NaN & 0.525000 & NaN & 1.607743 & 848519.000000 \\
+node_classification & cora & sep_bottleneck_gnn & accuracy & 3009b04e & 2 & 0.119000 & 0.060811 & 0.109500 & 0.055861 & 1.605082 & 105109.000000 \\
+node_classification & cora & sep_bottleneck_gnn & accuracy & 39f14790 & 1 & 0.072000 & NaN & 0.066000 & NaN & 1.859365 & 105109.000000 \\
+node_classification & cora & sep_bottleneck_gnn & accuracy & 53dbb625 & 1 & 0.162000 & NaN & 0.149000 & NaN & 1.972185 & 105108.000000 \\
+node_classification & cora & sep_bottleneck_gnn & accuracy & 5eed6b37 & 2 & 0.117000 & 0.063640 & 0.110000 & 0.055154 & 1.782615 & 105109.000000 \\
+node_classification & cora & sep_bottleneck_gnn & accuracy & b3a0442c & 1 & 0.758000 & NaN & 0.782000 & NaN & 3.859393 & 100821.000000 \\
 node_classification & cora & survey_gnn & accuracy & 0275beb1 & 1 & 0.696000 & NaN & 0.718000 & NaN & 1.917377 & 566664.000000 \\
 node_classification & cora & survey_gnn & accuracy & 0865e365 & 1 & 0.524000 & NaN & 0.546000 & NaN & 2.060887 & 401032.000000 \\
 node_classification & cora & survey_gnn & accuracy & 1533924a & 1 & 0.522000 & NaN & 0.543000 & NaN & 1.630286 & 217480.000000 \\
@@ -1568,6 +1599,10 @@ node_classification & pubmed & rign_gnn & accuracy & f522367b & 1 & 0.698000 & N
 node_classification & pubmed & rign_gnn & accuracy & faf9999f & 1 & 0.696000 & NaN & 0.714000 & NaN & 1.409671 & 171139.000000 \\
 node_classification & pubmed & rign_gnn & accuracy & fc0565ea & 1 & 0.692000 & NaN & 0.704000 & NaN & 1.828780 & 171139.000000 \\
 node_classification & pubmed & rign_gnn & accuracy & fe53f082 & 1 & 0.680000 & NaN & 0.694000 & NaN & 1.878329 & 171139.000000 \\
+node_classification & pubmed & sep_bottleneck_gnn & accuracy & 0f352f9d & 3 & 0.800000 & 0.005292 & 0.776333 & 0.011719 & 10.328340 & 40849.000000 \\
+node_classification & pubmed & sep_bottleneck_gnn & accuracy & 13e4e1a7 & 1 & 0.808000 & NaN & 0.784000 & NaN & 5.871769 & 40849.000000 \\
+node_classification & pubmed & sep_bottleneck_gnn & accuracy & 7a9d3133 & 2 & 0.445000 & 0.080610 & 0.452500 & 0.055861 & 3.348735 & 45137.000000 \\
+node_classification & pubmed & sep_bottleneck_gnn & accuracy & a4140da3 & 1 & 0.536000 & NaN & 0.500000 & NaN & 3.266066 & 45136.000000 \\
 node_classification & pubmed & survey_gnn & accuracy & 08d4ba3c & 1 & 0.738000 & NaN & 0.685000 & NaN & 2.099894 & 178628.000000 \\
 node_classification & pubmed & survey_gnn & accuracy & 0e6ddf88 & 1 & 0.690000 & NaN & 0.680000 & NaN & 1.000373 & 97796.000000 \\
 node_classification & pubmed & survey_gnn & accuracy & 1342ff46 & 1 & 0.736000 & NaN & 0.728000 & NaN & 3.421769 & 455556.000000 \\
@@ -1673,6 +1708,9 @@ node_classification & toy-node & res_appnp_net & accuracy & 441fdb48 & 1 & 0.500
 node_classification & toy-node & res_gin & accuracy & fef8bd3b & 1 & 0.600000 & NaN & 0.300000 & NaN & 0.973691 & 34695.000000 \\
 node_classification & toy-node & revision_gnn & accuracy & 3f95287c & 1 & 0.700000 & NaN & 0.500000 & NaN & 1.012854 & 100803.000000 \\
 node_classification & toy-node & rign_gnn & accuracy & c642d209 & 1 & 0.600000 & NaN & 0.300000 & NaN & 1.055788 & 76675.000000 \\
+node_classification & toy-node & sep_bottleneck_gnn & accuracy & 15a05892 & 2 & 0.500000 & 0.000000 & 0.300000 & 0.000000 & 0.945139 & 13649.000000 \\
+node_classification & toy-node & sep_bottleneck_gnn & accuracy & 69c50854 & 1 & 0.500000 & NaN & 0.300000 & NaN & 0.708719 & 9361.000000 \\
+node_classification & toy-node & sep_bottleneck_gnn & accuracy & 9c6d33fa & 1 & 0.500000 & NaN & 0.300000 & NaN & 0.875142 & 13648.000000 \\
 node_classification & toy-node & survey_gnn & accuracy & 9571f860 & 1 & 0.600000 & NaN & 0.700000 & NaN & 1.048570 & 35972.000000 \\
 node_classification & toy-node & temp_ladder_gnn & accuracy & f7f9d31c & 1 & 0.600000 & NaN & 0.300000 & NaN & 0.801766 & 6393.000000 \\
 node_classification & toy-node & walk_belief_transformer & accuracy & 0232517d & 1 & 0.500000 & NaN & 0.300000 & NaN & 1.027767 & 46787.000000 \\

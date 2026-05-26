@@ -1,0 +1,12 @@
+model:
+  name: normal_tree_backedge_gnn
+  hidden_channels: 64
+  num_layers: 3
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm
+  num_tree_orders: 1
+  edge_role_mode: "true"
+  dfs_order_mode: deterministic
+  pooling: mean_max_add
+  head_hidden_channels: 64

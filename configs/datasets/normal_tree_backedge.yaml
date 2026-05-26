@@ -1,0 +1,16 @@
+dataset:
+  name: normal-tree-backedge
+  task: graph_binary_classification
+  source: synthetic
+  metric: average_precision
+  evaluator: average_precision
+  trainer: graph_prediction
+  num_graphs: 120
+  num_nodes_per_graph: 20
+  num_features: 1
+  variant: cycle_matching_v4
+  generation_seed: 45678
+
+trainer:
+  name: graph_prediction
+  batch_size: 16
