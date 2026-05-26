@@ -15,6 +15,111 @@ Follow-up:
 
 ## Insights
 
+## 2026-05-26 - Parallel Round 001 Found Structural Detectors, Not Architecture Wins
+
+Evidence:
+
+Nine remaining graph-theory idea-bank branches were implemented and reviewed in isolated worktrees:
+CycleCutGNN-lite, BranchSetGNN, BagAutomatonGNN, ListColorGNN, ClassFlowGNN, DualShadowGNN,
+ChordlessCycleMemoryGNN, RegularPatchGNN, and ObstructionTokenGNN. No branch produced an
+unconfounded architecture improvement under the review protocol. The strongest synthetic signals
+were structural: CycleCutGNN-lite default reached validation AP `0.7568 +/- 0.0466` on
+`cycle_matching_v4`, but cycle-only was higher on validation (`0.7686`) and a merged edge-state MPNN
+was close (`0.7403`) with higher held-out test AP. DualShadowGNN reached validation AP
+`0.8802 +/- 0.0194`, but a pseudo-face histogram MLP reached val/test AP `0.8324/0.8860`, and
+shadow-only was comparable to the full model. ObstructionTokenGNN reached perfect AP on its
+triangular-prism-vs-`K3,3` diagnostic, but obstruction-count logistic/MLP controls also reached
+`1.0/1.0`.
+
+Implication:
+
+The durable result is that structural detectors and handcrafted structural features expose signal
+on the current synthetic diagnostics. The tested neural mechanisms were not isolated from simpler
+controls, so none should be promoted as a validated novel architecture or benchmark-ready model.
+Synthetic-only success must be described narrowly as detector or diagnostic support.
+
+Follow-up:
+
+Before continuing CycleCut, DualShadow, ChordlessCycleMemory, or ObstructionToken, build diagnostics
+that match the candidate detector counts and histograms, and require the neural mechanism to beat
+same-feature/logistic/MLP and same-capacity ablations by validation metric.
+
+## 2026-05-26 - Shortcut Baselines Must Match The Candidate Structural Features
+
+Evidence:
+
+Round 001 reviewer fixes repeatedly changed the interpretation once stronger shortcuts were added.
+ChordlessCycleMemoryGNN initially had validation AP `0.8828 +/- 0.0052`, but explicit-feature GIN
+with basic statistics and chordless counts reached validation/test AP `0.9464/0.8270`, and logistic
+chordless-count controls reached test AP `0.8356`. RegularPatchGNN's hardened diagnostic removed
+the original edge-count shortcut, but degree-stat logistic still reached val/test AP `0.6798/0.7794`
+while patch-channel ablations did not support a positive claim. ObstructionTokenGNN's detector
+counts solved the diagnostic without token message passing. DualShadowGNN's pseudo-face histogram
+baseline matched or exceeded the model on held-out reporting.
+
+Implication:
+
+Generic graph-stat baselines are not enough. For graph-theoretic architectures, the shortcut suite
+must include the exact structural quantities the model computes: cycle counts, pseudo-face
+histograms, obstruction counts, degree summaries, and merged/same-capacity versions of the model
+without the proposed decomposition.
+
+Follow-up:
+
+Add a reusable shortcut-audit pattern for future synthetic graph tasks: prevalence, graph stats,
+candidate detector counts, candidate detector histograms, same-feature logistic/MLP, and
+same-capacity neural ablations. Do not claim mechanism support until these controls are beaten on
+validation.
+
+## 2026-05-26 - Structural Graph Claims Need Invariance And Post-Fix Metric Audits
+
+Evidence:
+
+Round 001 found multiple correctness risks before review fixes. BagAutomatonGNN's first high
+seed-0 result depended on node-id-sensitive min-degree tie breaking and failed relabeling audit, so
+the result was archived after the implementation was rewritten as an invariant edge-bag scaffold.
+ChordlessCycleMemoryGNN's capped cycle enumeration was still label-order dependent after the first
+fix pass; a focused fix replaced capped DFS-order truncation with invariant cycle ranking and was
+re-reviewed successfully. BranchSetGNN's old audit AP did not line up with the run table, and the
+post-fix implementation invalidated the old metric rows. CycleCutGNN-lite completed a relabeling
+audit after fixes with max prediction range `8.94e-08`.
+
+Implication:
+
+For structural graph models, relabeling, edge-order, batch-composition, capped-enumeration, and
+cache-key audits are part of the evidence, not optional polish. Metrics collected before a
+correctness-changing fix cannot support the fixed implementation.
+
+Follow-up:
+
+Standardize graph-model audits for every new synthetic architecture: relabeling invariance,
+edge-order invariance, batch-composition checks, cap/tie stress tests, and explicit marking of
+pre-fix metrics as archived or invalid evidence.
+
+## 2026-05-26 - Round 001 Node-Idea Screens Reinforce GPR As The Node Target
+
+Evidence:
+
+ListColorGNN was rerun on a harder non-saturated synthetic heterophily diagnostic. The best
+ListColor validation accuracy was `0.9083`, while `gpr_gnn` reached validation `0.9167`; fixed
+same-channel suppression did not beat the no-suppression multi-channel ablation. ClassFlowGNN was
+revised from a hidden-flow proxy into a class-logit potential flow with evidence injection, but the
+flow-enabled path reached Cora/PubMed seed-0 validation `0.4260/0.7600` versus flow-disabled
+`0.7020/0.7620`.
+
+Implication:
+
+Neither list-color channel allocation nor class-flow residuals are currently competitive with the
+existing GPR-style node baseline under the tested protocols. The ClassFlow result is specifically a
+negative result for the current trainer-free class-flow formulation, not for all conservation-law
+training objectives.
+
+Follow-up:
+
+Keep `gpr_gnn` as the node-classification validation target. Reopen ListColor only with a real
+heterophily benchmark or a diagnostic where GPR fails. Reopen ClassFlow only with a dedicated
+source/sink task and, likely, an explicit training objective rather than a trainer-free residual.
+
 ## 2026-05-26 - TreePack Ablations Favor One BFS Witness Over Learned View Packing
 
 Evidence:

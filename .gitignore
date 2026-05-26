@@ -27,6 +27,7 @@ logs/
 wandb/
 runs/
 research_results.tsv
+prompt_scatchpad.md
 
 # Notebooks
 .ipynb_checkpoints/

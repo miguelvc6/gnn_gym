@@ -4,6 +4,45 @@ This file is for working memory across research sessions: what was tried, what h
 
 Do not use this file for final claims. Promote durable conclusions to `research/INSIGHTS.md`.
 
+## Next parallel round candidates
+
+- Continue:
+  - `CycleCutGNN-lite` only as a structural-feature diagnostic. Do not repeat the current split
+    claim unless split cut/cycle channels beat cycle-only and merged edge-state MPNN controls by
+    validation metric.
+  - `DualShadowGNN` only as pseudo-face/motif diagnostic support. Do not claim planar-dual novelty;
+    next task must match pseudo-face count, cycle-length histogram, and collapsed pseudo-face
+    statistics.
+  - `ObstructionTokenGNN` as detector/shortcut-audit infrastructure only, not as a token
+    message-passing win.
+- Revise:
+  - `BagAutomatonGNN` needs post-fix retraining before any evidence use; old high seed-0 metrics are
+    archived because they came from a node-id-sensitive implementation.
+  - `ChordlessCycleMemoryGNN` needs a cleaner diagnostic that controls chordless-count, triangle,
+    degree, and prevalence shortcuts; current capped enumeration is fixed but the architecture
+    result is negative/inconclusive.
+- Archive:
+  - `BranchSetGNN`, `ListColorGNN`, `ClassFlowGNN`, and `RegularPatchGNN` should not be repeated
+    unless their specific blockers are fixed with new diagnostics.
+  - Do not repeat TreePack learned view gating unless there is a new canonical or sharply selective
+    tree-witness mechanism.
+- New ideas:
+  - Matched-histogram pseudo-face arrangement diagnostic.
+  - Separator-bottleneck task with graph-stat, bag-stat, and detector-count controls included from
+    the start.
+  - Small exact cycle/cut or Hodge-projection diagnostic compared directly to merged edge-state
+    MPNN.
+  - Canonical witness-selection task for trees/cycles compared against single-witness controls.
+- Infrastructure needed:
+  - Standard shortcut suite: prevalence, graph stats, candidate detector counts/histograms,
+    same-feature logistic/MLP, and same-capacity neural ablations.
+  - Standard graph-model audit suite: relabeling, edge-order, batch-composition, capped-enumeration,
+    cache-bound, and tie-stress tests.
+  - Policy that pre-fix metrics are invalid evidence after correctness-changing implementation
+    changes.
+  - Precomputed structural transforms before trying expensive detectors on molecule or larger graph
+    benchmarks.
+
 ## Current Benchmark Discipline
 
 - Keep the harness fixed while evaluating an architecture idea.
