@@ -22,11 +22,12 @@ class GraphClassificationHead(nn.Module):
     ) -> None:
         super().__init__()
         self.pooling = pooling
+        pooled_channels = 3 * in_channels if pooling == "mean_max_add" else in_channels
         if hidden_channels is None:
-            self.net = nn.Linear(in_channels, out_channels)
+            self.net = nn.Linear(pooled_channels, out_channels)
         else:
             self.net = nn.Sequential(
-                nn.Linear(in_channels, hidden_channels),
+                nn.Linear(pooled_channels, hidden_channels),
                 nn.ReLU(),
                 nn.Linear(hidden_channels, out_channels),
             )
@@ -36,6 +37,15 @@ class GraphClassificationHead(nn.Module):
             pooled = global_add_pool(x, batch)
         elif self.pooling == "max":
             pooled = global_max_pool(x, batch)
+        elif self.pooling == "mean_max_add":
+            pooled = torch.cat(
+                [
+                    global_mean_pool(x, batch),
+                    global_max_pool(x, batch),
+                    global_add_pool(x, batch),
+                ],
+                dim=-1,
+            )
         else:
             pooled = global_mean_pool(x, batch)
         return self.net(pooled)

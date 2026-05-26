@@ -1,0 +1,22 @@
+\begin{tabular}{llllrrrrrrr}
+\toprule
+task & dataset & model & metric_name & seeds & val_mean & val_std & test_mean & test_std & train_time_seconds_mean & num_parameters_mean \\
+\midrule
+graph_binary_classification & ogbg-molhiv & gat & rocauc & 3 & 0.737954 & 0.003584 & 0.690910 & 0.001210 & 115.429836 & 18945.000000 \\
+graph_binary_classification & ogbg-molhiv & gcn & rocauc & 3 & 0.754262 & 0.011362 & 0.679831 & 0.010170 & 124.004140 & 5121.000000 \\
+graph_binary_classification & ogbg-molhiv & gin & rocauc & 3 & 0.761886 & 0.014876 & 0.675720 & 0.025212 & 113.829023 & 21892.000000 \\
+graph_binary_classification & ogbg-molhiv & mlp & rocauc & 3 & 0.676415 & 0.010212 & 0.633297 & 0.012713 & 68.691395 & 5121.000000 \\
+node_classification & cora & gat & accuracy & 3 & 0.731333 & 0.011015 & 0.733333 & 0.003055 & 2.441753 & 201991.000000 \\
+node_classification & cora & gcn & accuracy & 3 & 0.638000 & 0.033045 & 0.650667 & 0.021127 & 2.869966 & 96647.000000 \\
+node_classification & cora & gin & accuracy & 3 & 0.661333 & 0.011547 & 0.671000 & 0.019157 & 2.064147 & 113418.000000 \\
+node_classification & cora & mlp & accuracy & 3 & 0.379333 & 0.022745 & 0.368333 & 0.011590 & 2.319940 & 96647.000000 \\
+node_classification & pubmed & gat & accuracy & 3 & 0.760667 & 0.016653 & 0.754667 & 0.015044 & 2.778106 & 82051.000000 \\
+node_classification & pubmed & gcn & accuracy & 3 & 0.650667 & 0.130726 & 0.661667 & 0.123957 & 2.227146 & 36675.000000 \\
+node_classification & pubmed & gin & accuracy & 3 & 0.730000 & 0.021166 & 0.697333 & 0.024214 & 2.848762 & 53446.000000 \\
+node_classification & pubmed & mlp & accuracy & 3 & 0.570667 & 0.067686 & 0.569333 & 0.101041 & 1.656637 & 36675.000000 \\
+node_classification & toy-node & gat & accuracy & 1 & 0.500000 & NaN & 0.200000 & NaN & 0.806900 & 19075.000000 \\
+node_classification & toy-node & gcn & accuracy & 2 & 0.600000 & 0.141421 & 0.400000 & 0.141421 & 4.419858 & 3043.000000 \\
+node_classification & toy-node & gin & accuracy & 1 & 0.400000 & NaN & 0.300000 & NaN & 1.000225 & 21958.000000 \\
+node_classification & toy-node & mlp & accuracy & 1 & 0.700000 & NaN & 0.600000 & NaN & 0.618632 & 5187.000000 \\
+\bottomrule
+\end{tabular}

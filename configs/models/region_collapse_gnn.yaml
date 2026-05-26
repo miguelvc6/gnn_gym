@@ -1,0 +1,8 @@
+model:
+  name: region_collapse_gnn
+  hidden_channels: 64
+  num_layers: 2
+  num_regions: 16
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm

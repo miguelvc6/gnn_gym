@@ -44,6 +44,9 @@ def append_research_result(
         metadata = json.load(handle)
     with (run_dir / "final_metrics.json").open("r", encoding="utf-8") as handle:
         metrics = json.load(handle)
+    def value_or_empty(value: Any) -> Any:
+        return "" if value is None else value
+
     if not path_exists:
         path.write_text(
             "timestamp\trun_id\tcommit\tmodel\tdataset\tseed\tmetric\tval_metric\t"
@@ -52,16 +55,16 @@ def append_research_result(
         )
     row = [
         datetime.now(UTC).isoformat(),
-        metadata.get("run_id", run_dir.name),
-        metadata.get("git_commit") or "",
-        metadata.get("model") or "",
-        metadata.get("dataset") or "",
-        str(metadata.get("seed") or ""),
-        metrics.get("metric_name") or "",
-        str(metrics.get("best_val_metric") or ""),
-        str(metrics.get("test_metric") or ""),
-        str(metrics.get("best_epoch") or ""),
-        str(metrics.get("train_time_seconds") or ""),
+        value_or_empty(metadata.get("run_id", run_dir.name)),
+        value_or_empty(metadata.get("git_commit")),
+        value_or_empty(metadata.get("model")),
+        value_or_empty(metadata.get("dataset")),
+        value_or_empty(metadata.get("seed")),
+        value_or_empty(metrics.get("metric_name")),
+        value_or_empty(metrics.get("best_val_metric")),
+        value_or_empty(metrics.get("test_metric")),
+        value_or_empty(metrics.get("best_epoch")),
+        value_or_empty(metrics.get("train_time_seconds")),
         status,
         " ".join(overrides),
         notes,

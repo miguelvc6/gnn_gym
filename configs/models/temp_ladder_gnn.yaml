@@ -1,0 +1,8 @@
+model:
+  name: temp_ladder_gnn
+  hidden_channels: 16
+  num_layers: 2
+  temperatures: [0.5, 1.0, 2.0]
+  dropout: 0.2
+  activation: elu
+  norm: batchnorm

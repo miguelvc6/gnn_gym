@@ -1,0 +1,25 @@
+experiment:
+  name: research_2026_05_22_gpr_cora_confirm
+  seeds: [0, 1, 2]
+  write_research_results: true
+  research_results_path: research_results.tsv
+
+models:
+  - gpr_gnn
+
+datasets:
+  - cora
+
+training:
+  max_epochs: 200
+  patience: 50
+  scheduler: none
+
+sweep:
+  model.hidden_channels: [128]
+  model.num_layers: [1]
+  model.dropout: [0.2]
+  model.propagation_steps: [10]
+  model.alpha: [0.1]
+  training.lr: [0.01]
+  training.weight_decay: [0.0005]

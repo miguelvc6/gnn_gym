@@ -1,0 +1,10 @@
+model:
+  name: res_appnp_net
+  hidden_channels: 64
+  num_layers: 2
+  propagation_steps: 10
+  alpha: 0.1
+  dropout: 0.5
+  activation: relu
+  norm: batchnorm
+  gate_init: -4.0

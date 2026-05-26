@@ -1,0 +1,8 @@
+model:
+  name: loop_corrected_gnn
+  hidden_channels: 64
+  num_layers: 2
+  max_triangles: 512
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm

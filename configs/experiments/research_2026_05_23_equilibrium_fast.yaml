@@ -1,0 +1,24 @@
+experiment:
+  name: research_2026_05_23_equilibrium_fast
+  seeds: [0]
+  write_research_results: true
+  research_results_path: research_results.tsv
+
+models:
+  - equilibrium_belief_gnn
+
+datasets:
+  - cora
+  - pubmed
+
+training:
+  max_epochs: 50
+  patience: 15
+  scheduler: none
+
+sweep:
+  model.hidden_channels: [64, 128]
+  model.max_steps: [4, 8, 12]
+  model.dropout: [0.2, 0.5]
+  training.lr: [0.01, 0.005]
+  training.weight_decay: [0.0005]

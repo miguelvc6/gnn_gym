@@ -1,0 +1,8 @@
+model:
+  name: equilibrium_belief_gnn
+  hidden_channels: 64
+  max_steps: 8
+  tolerance: 0.001
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm

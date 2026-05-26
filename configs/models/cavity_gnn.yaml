@@ -1,0 +1,8 @@
+model:
+  name: cavity_gnn
+  hidden_channels: 64
+  num_steps: 3
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm
+  residual_weight: 0.5

@@ -1,0 +1,8 @@
+model:
+  name: rign_gnn
+  hidden_channels: 64
+  macro_steps: 3
+  micro_steps: 2
+  dropout: 0.2
+  activation: relu
+  norm: layernorm

@@ -1,0 +1,7 @@
+model:
+  name: decimation_gnn
+  hidden_channels: 64
+  num_rounds: 3
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm

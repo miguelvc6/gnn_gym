@@ -114,5 +114,8 @@ sweep:
     run_sweep(config_path, runs_dir=tmp_path / "runs", device="cpu")
 
     assert len(list((tmp_path / "runs").iterdir())) == 2
-    assert len(research_results.read_text(encoding="utf-8").strip().splitlines()) == 3
+    lines = research_results.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 3
+    seed_idx = lines[0].split("\t").index("seed")
+    assert {line.split("\t")[seed_idx] for line in lines[1:]} == {"0"}
     assert load_yaml(config_path)["experiment"]["name"] == "test_sweep"

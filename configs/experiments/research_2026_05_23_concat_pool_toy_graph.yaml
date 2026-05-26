@@ -1,0 +1,25 @@
+experiment:
+  name: research_2026_05_23_concat_pool_toy_graph
+  seeds: [0]
+  write_research_results: true
+  research_results_path: research_results.tsv
+
+models:
+  - gin
+
+datasets:
+  - toy-graph
+
+training:
+  max_epochs: 5
+  patience: 3
+  scheduler: none
+
+sweep:
+  model.hidden_channels: [32]
+  model.num_layers: [2]
+  model.dropout: [0.2]
+  model.pooling: [mean_max_add]
+  model.head_hidden_channels: [32]
+  training.lr: [0.01]
+  training.weight_decay: [0.0005]

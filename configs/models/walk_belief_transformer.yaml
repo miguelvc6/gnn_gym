@@ -1,0 +1,9 @@
+model:
+  name: walk_belief_transformer
+  hidden_channels: 64
+  walk_length: 4
+  num_layers: 1
+  heads: 2
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm

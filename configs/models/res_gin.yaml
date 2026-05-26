@@ -1,0 +1,8 @@
+model:
+  name: res_gin
+  hidden_channels: 64
+  num_layers: 4
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm
+  eps_trainable: true

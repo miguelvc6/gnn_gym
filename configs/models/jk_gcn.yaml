@@ -1,0 +1,8 @@
+model:
+  name: jk_gcn
+  hidden_channels: 64
+  num_layers: 3
+  dropout: 0.2
+  activation: relu
+  norm: batchnorm
+  jk_mode: cat
